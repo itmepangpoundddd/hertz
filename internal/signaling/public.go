@@ -17,7 +17,12 @@ import (
 	"hertz/internal/sfu"
 )
 
-const maxNowPlayingField = 200
+const (
+	maxNowPlayingField = 200
+	// Keep the HTTP audio queue short. At 50 packets/s, 8 packets is at most
+	// 160 ms of server-side queueing; a slower client should drop, not delay.
+	oggSinkQueue = 8
+)
 
 type nowPlayingView struct {
 	Title     string    `json:"title"`
@@ -193,6 +198,8 @@ func (s *Server) liveOgg(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Pragma", "no-cache")
 	w.Header().Set("Accept-Ranges", "none")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
+	// Ask nginx not to buffer the stream if HERTZ is behind a reverse proxy.
+	w.Header().Set("X-Accel-Buffering", "no")
 	// The global server WriteTimeout is intended for short signaling requests.
 	// Ogg listeners are long-lived, so clear the deadline for this response.
 	_ = http.NewResponseController(w).SetWriteDeadline(time.Time{})
@@ -247,7 +254,7 @@ type oggSink struct {
 
 func newOGGSink() *oggSink {
 	return &oggSink{
-		packets: make(chan oggPacket, 64),
+		packets: make(chan oggPacket, oggSinkQueue),
 		done:    make(chan struct{}),
 	}
 }

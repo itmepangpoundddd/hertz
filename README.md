@@ -252,9 +252,9 @@ Latest local artifacts (2026-11-07):
 
 | File | Bytes | SHA-256 |
 |---|---:|---|
-| `dist\HERTZ.exe` | 24,089,088 | `8189D8574D47781CB3FE3FDF400126D52AD3623EAAFC927B2710A53F0B589C37` |
-| `dist\HERTZ-Setup-0.1.0.exe` | 7,490,082 | `B30731ADBB77C9A446DBC7FBD6D3EA8F37477FAB5F10081619C489A022F63055` |
-| `dist\HERTZ-windows-x64.zip` | 9,745,791 | `31374A7322576E35D468283F531C33464A3E0615B3E0D85F1ACAF425EE195495` |
+| `dist\HERTZ.exe` | 24,090,112 | `EC9346E66CFBB9EA346F28F9B20A49FE334185BBB156C98120A702F91E105C7F` |
+| `dist\HERTZ-Setup-0.1.0.exe` | 7,489,765 | `CA480802E1E1E002BC149C907B0DC724844686CB17DCA7F8DAD4287B740799AD` |
+| `dist\HERTZ-windows-x64.zip` | 9,747,869 | `0C3E28437D8674CD85469A04691921A9B13E9CD440094ED55D1170FE716CFD25` |
 
 The admin listener is loopback-only and rejects foreign `Host`/`Origin` headers. See **[docs/ADMIN.md](docs/ADMIN.md)** for setup, firewall, tray, butt configuration, TURN, and troubleshooting.
 
@@ -304,6 +304,8 @@ curl -s -X POST http://127.0.0.1:8080/v1/nowplaying \
 The **Now playing** card in the admin dashboard does the same thing: the admin process signs a short-lived `KindPublish` token locally and forwards the request to the engine, so the token never reaches the browser. Title and artist are limited to 200 characters; control characters are rejected. The metadata is in memory and is cleared when the engine restarts.
 
 HTTP audio listeners are capped by `HERTZ_MAX_HTTP_LISTENERS` (default 200). Each connection is a separate Ogg stream; slow clients drop packets rather than blocking WebRTC fanout.
+
+Ogg/HTTP latency is higher than WebRTC by design: media runs over TCP, then the player adds its own buffer. HERTZ caps its server-side queue at 8 packets (`oggSinkQueue`, about 160 ms at 50 packets/s); when the client falls behind, packets are dropped instead of increasing delay. VLC's default network cache adds more, so use `--network-caching=100` or `200` when low latency matters. If `/live.ogg` is behind nginx, disable proxy buffering for that location; HERTZ sends `X-Accel-Buffering: no`. For the lowest latency, use the WebRTC `/listen` page or a WebRTC client.
 
 ### Production token flow
 

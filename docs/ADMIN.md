@@ -169,6 +169,11 @@ http://192.168.1.10:8080/listen#t=<token>
 ```
 
 - จำนวน HTTP listener จำกัดด้วย `HERTZ_MAX_HTTP_LISTENERS` (ค่าเริ่มต้น 200)
+- Ogg/HTTP มี latency สูงกว่า WebRTC เพราะวิ่งบน TCP และ player มี buffer ของตัวเอง
+- HERTZ จำกัด queue ฝั่ง server ไว้ 8 packets (~160 ms ที่ 50 packets/s) — ถ้า client ช้าจะ drop แทนการเพิ่มดีเลย์
+- VLC ค่าเริ่มต้นมี network cache เพิ่มอีก ถ้าต้องการลดให้ใช้ `--network-caching=100` หรือ `200`
+- ถ้า `/live.ogg` อยู่หลัง nginx ให้ปิด `proxy_buffering` สำหรับ location นั้น (HERTZ ส่ง `X-Accel-Buffering: no` ให้แล้ว)
+- ถ้าต้องการ latency ต่ำสุด ให้ใช้ `/listen` WebRTC หรือ client ที่รองรับ WebRTC
 - ถ้าเว็บ player เป็น HTTPS จะโหลดลิงก์เสียง HTTP ไม่ได้เพราะ mixed content
 - metadata เก็บในหน่วยความจำของ engine และจะหายเมื่อรีสตาร์ท engine
 
@@ -355,9 +360,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-admin.ps1
 
 | ไฟล์ | ขนาด | SHA-256 |
 |---|---:|---|
-| `dist\HERTZ.exe` | 24,089,088 ไบต์ | `8189D8574D47781CB3FE3FDF400126D52AD3623EAAFC927B2710A53F0B589C37` |
-| `dist\HERTZ-Setup-0.1.0.exe` | 7,490,082 ไบต์ | `B30731ADBB77C9A446DBC7FBD6D3EA8F37477FAB5F10081619C489A022F63055` |
-| `dist\HERTZ-windows-x64.zip` | 9,745,791 ไบต์ | `31374A7322576E35D468283F531C33464A3E0615B3E0D85F1ACAF425EE195495` |
+| `dist\HERTZ.exe` | 24,090,112 ไบต์ | `EC9346E66CFBB9EA346F28F9B20A49FE334185BBB156C98120A702F91E105C7F` |
+| `dist\HERTZ-Setup-0.1.0.exe` | 7,489,765 ไบต์ | `CA480802E1E1E002BC149C907B0DC724844686CB17DCA7F8DAD4287B740799AD` |
+| `dist\HERTZ-windows-x64.zip` | 9,747,869 ไบต์ | `0C3E28437D8674CD85469A04691921A9B13E9CD440094ED55D1170FE716CFD25` |
 
 > installer ยังไม่ได้ code-sign; SmartScreen อาจเตือนจนกว่าจะมี code-signing certificate
 
