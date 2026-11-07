@@ -29,6 +29,8 @@ butt-master/src/.deps/
 butt-master/src/.libs/
 butt-master/**/.deps/
 butt-master/**/.libs/
+**/.dirstamp
+**/xcuserdata/
 butt-master/dist/
 butt-master/usr/
 *.o
