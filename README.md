@@ -235,7 +235,7 @@ Build a normal Windows installer with Inno Setup 6/7:
 
 ```powershell
 .\scripts\build-installer.ps1
-# -> dist\HERTZ-Setup-0.1.0.exe
+# -> dist\HERTZ-Setup-0.2.0.exe
 ```
 
 The installer runs per-user by default (no administrator required), installs under `%LOCALAPPDATA%\Programs\HERTZ`, creates Start Menu and optional Desktop shortcuts, and offers “Start HERTZ when I sign in”. If launched by an administrator and installed for all users, it also adds Windows Firewall rules for UDP 5004 (RTP ingest), UDP 8443 (ICE), and TCP 8080 (listener HTTP). The installer is unsigned, so Windows SmartScreen may warn until a code-signing certificate is used.
@@ -252,9 +252,11 @@ Latest local artifacts (2026-11-07):
 
 | File | Bytes | SHA-256 |
 |---|---:|---|
-| `dist\HERTZ.exe` | 24,090,112 | `EC9346E66CFBB9EA346F28F9B20A49FE334185BBB156C98120A702F91E105C7F` |
-| `dist\HERTZ-Setup-0.1.0.exe` | 7,489,765 | `CA480802E1E1E002BC149C907B0DC724844686CB17DCA7F8DAD4287B740799AD` |
-| `dist\HERTZ-windows-x64.zip` | 9,747,869 | `0C3E28437D8674CD85469A04691921A9B13E9CD440094ED55D1170FE716CFD25` |
+| `dist\HERTZ.exe` | 24,090,112 | `138AB50BAC8C8DB30097AD3176D40F7BBFEE5AB81618768511660B5F13195259` |
+| `dist\HERTZ-Setup-0.2.0.exe` | 7,491,881 | `823B718E8B30A3967BE7BA85E78F776EC56942DB8AA80C8167B35263CD258BE3` |
+| `dist\HERTZ-windows-x64.zip` | 9,747,873 | `BC63B65C241BDDE788F9A94E4B1AC13AD3BB10BB133DFAAD0D4B5864DBDD17DF` |
+
+See **[docs/RELEASE-0.2.0.md](docs/RELEASE-0.2.0.md)** for the full 0.2.0 release notes.
 
 The admin listener is loopback-only and rejects foreign `Host`/`Origin` headers. See **[docs/ADMIN.md](docs/ADMIN.md)** for setup, firewall, tray, butt configuration, TURN, and troubleshooting.
 

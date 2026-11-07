@@ -67,7 +67,7 @@ go build -o bin/token ./cmd/token
 ถ้าต้องการฝัง version:
 
 ```powershell
-go build -ldflags "-X hertz/internal/version.Version=0.1.0 -X hertz/internal/version.Commit=demo" `
+go build -ldflags "-X hertz/internal/version.Version=0.2.0 -X hertz/internal/version.Commit=demo" `
   -o bin/hertz.exe ./cmd/hertz
 ```
 

@@ -9,7 +9,7 @@
 แนะนำ:
 
 ```text
-dist\HERTZ-Setup-0.1.0.exe
+dist\HERTZ-Setup-0.2.0.exe
 ```
 
 หรือใช้แบบ portable:
@@ -51,7 +51,7 @@ dist\HERTZ.exe
 
 ### 2.1 ติดตั้งด้วย HERTZ-Setup
 
-- ดับเบิลคลิก `HERTZ-Setup-0.1.0.exe`
+- ดับเบิลคลิก `HERTZ-Setup-0.2.0.exe`
 - ค่าเริ่มต้นติดตั้งแบบ **per-user** ไม่ต้องใช้สิทธิ์ admin ลงที่ `%LOCALAPPDATA%\Programs\HERTZ`
 - สร้าง Start Menu shortcut และเลือก Desktop shortcut / Start with Windows ได้
 - ถ้ารันด้วยสิทธิ์ admin และเลือกติดตั้งสำหรับ all users จะเพิ่ม Windows Firewall rules ให้ UDP `5004`, UDP `8443` และ TCP `8080`
@@ -353,16 +353,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-admin.ps1
 
 ```powershell
 .\scripts\build-installer.ps1
-# -> dist\HERTZ-Setup-0.1.0.exe
+# -> dist\HERTZ-Setup-0.2.0.exe
 ```
 
 ### รุ่นที่ build ล่าสุด (2026-11-07)
 
 | ไฟล์ | ขนาด | SHA-256 |
 |---|---:|---|
-| `dist\HERTZ.exe` | 24,090,112 ไบต์ | `EC9346E66CFBB9EA346F28F9B20A49FE334185BBB156C98120A702F91E105C7F` |
-| `dist\HERTZ-Setup-0.1.0.exe` | 7,489,765 ไบต์ | `CA480802E1E1E002BC149C907B0DC724844686CB17DCA7F8DAD4287B740799AD` |
-| `dist\HERTZ-windows-x64.zip` | 9,747,869 ไบต์ | `0C3E28437D8674CD85469A04691921A9B13E9CD440094ED55D1170FE716CFD25` |
+| `dist\HERTZ.exe` | 24,090,112 ไบต์ | `138AB50BAC8C8DB30097AD3176D40F7BBFEE5AB81618768511660B5F13195259` |
+| `dist\HERTZ-Setup-0.2.0.exe` | 7,491,881 ไบต์ | `823B718E8B30A3967BE7BA85E78F776EC56942DB8AA80C8167B35263CD258BE3` |
+| `dist\HERTZ-windows-x64.zip` | 9,747,873 ไบต์ | `BC63B65C241BDDE788F9A94E4B1AC13AD3BB10BB133DFAAD0D4B5864DBDD17DF` |
+
+> release notes: [`docs/RELEASE-0.2.0.md`](RELEASE-0.2.0.md)
 
 > installer ยังไม่ได้ code-sign; SmartScreen อาจเตือนจนกว่าจะมี code-signing certificate
 
