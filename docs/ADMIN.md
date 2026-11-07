@@ -6,11 +6,19 @@
 
 ## 1. ไฟล์ที่ต้องใช้
 
+แนะนำ:
+
+```text
+dist\HERTZ-Setup-0.1.0.exe
+```
+
+หรือใช้แบบ portable:
+
 ```text
 dist\HERTZ.exe
 ```
 
-เป็นไฟล์เดียวที่รวม:
+`HERTZ.exe` เป็นไฟล์เดียวที่รวม:
 
 | ส่วน | รายละเอียด |
 |---|---|
@@ -19,7 +27,7 @@ dist\HERTZ.exe
 | Tray | ไอคอนข้างนาฬิกาสำหรับเปิด/หยุด/ปิดระบบ |
 | Listener page | หน้าเว็บผู้ฟังที่ `/listen` พร้อม token ใน fragment |
 
-ไม่ต้องติดตั้ง Go, DLL หรือ runtime เพิ่ม
+ไม่ต้องติดตั้ง Go, DLL หรือ runtime เพิ่ม และ **ไม่ต้องใช้ IIS**
 
 ---
 
@@ -40,6 +48,17 @@ dist\HERTZ.exe
 หลังตั้งค่าเสร็จ ครั้งต่อไปที่ดับเบิลคลิก `HERTZ.exe` โปรแกรมจะไม่เปิด cmd ค้างไว้ แต่จะไปอยู่ใน **system tray** และเริ่ม engine ให้อัตโนมัติ
 
 > ถ้าดับเบิลคลิกซ้ำขณะโปรแกรมทำงานอยู่ ตัวที่สองจะตรวจพบตัวแรกและเปิดแดชบอร์ดให้ทันที ไม่สร้าง engine ซ้ำ
+
+### 2.1 ติดตั้งด้วย HERTZ-Setup
+
+- ดับเบิลคลิก `HERTZ-Setup-0.1.0.exe`
+- ค่าเริ่มต้นติดตั้งแบบ **per-user** ไม่ต้องใช้สิทธิ์ admin ลงที่ `%LOCALAPPDATA%\Programs\HERTZ`
+- สร้าง Start Menu shortcut และเลือก Desktop shortcut / Start with Windows ได้
+- ถ้ารันด้วยสิทธิ์ admin และเลือกติดตั้งสำหรับ all users จะเพิ่ม Windows Firewall rules ให้ UDP `5004`, UDP `8443` และ TCP `8080`
+- ถ้าติดตั้งแบบ per-user แล้ว Windows Firewall ถาม ให้ allow บน **Private networks** สำหรับพอร์ตข้างต้น
+- uninstall ไม่ลบ `%LOCALAPPDATA%\HERTZ` (config/log) เพื่อให้ตั้งค่าเดิมยังอยู่
+- installer ยังไม่ได้ code-sign ดังนั้น Windows SmartScreen อาจเตือน
+- **ไม่ต้องใช้ IIS** — HERTZ มี HTTP server ในตัวสำหรับ admin/listener/VLC/metadata
 
 ---
 
@@ -325,12 +344,22 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-admin.ps1
 
 ต้องมี Go 1.26+ และไม่ต้องใช้ CGO สำหรับ `HERTZ.exe`
 
+สร้าง installer ต่อด้วย Inno Setup 6/7:
+
+```powershell
+.\scripts\build-installer.ps1
+# -> dist\HERTZ-Setup-0.1.0.exe
+```
+
 ### รุ่นที่ build ล่าสุด (2026-11-07)
 
 | ไฟล์ | ขนาด | SHA-256 |
 |---|---:|---|
 | `dist\HERTZ.exe` | 24,089,088 ไบต์ | `8189D8574D47781CB3FE3FDF400126D52AD3623EAAFC927B2710A53F0B589C37` |
+| `dist\HERTZ-Setup-0.1.0.exe` | 7,490,082 ไบต์ | `B30731ADBB77C9A446DBC7FBD6D3EA8F37477FAB5F10081619C489A022F63055` |
 | `dist\HERTZ-windows-x64.zip` | 9,745,791 ไบต์ | `31374A7322576E35D468283F531C33464A3E0615B3E0D85F1ACAF425EE195495` |
+
+> installer ยังไม่ได้ code-sign; SmartScreen อาจเตือนจนกว่าจะมี code-signing certificate
 
 ตรวจไฟล์ก่อนแจกจ่ายได้ด้วย:
 

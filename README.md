@@ -229,6 +229,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-admin.ps1
 
 First launch keeps a console visible, opens `http://127.0.0.1:8090/setup`, and starts the embedded engine after the form is saved. Later launches hide the console and live in the system tray. The admin UI is in English, generates listener links and QR codes plus an iframe embed snippet for listener websites, shows source/listener/bitrate status, exposes direct Ogg/Opus and public-metadata URLs for VLC/custom players, edits now-playing metadata, and exposes engine start/stop/restart and logs.
 
+### Windows installer
+
+Build a normal Windows installer with Inno Setup 6/7:
+
+```powershell
+.\scripts\build-installer.ps1
+# -> dist\HERTZ-Setup-0.1.0.exe
+```
+
+The installer runs per-user by default (no administrator required), installs under `%LOCALAPPDATA%\Programs\HERTZ`, creates Start Menu and optional Desktop shortcuts, and offers “Start HERTZ when I sign in”. If launched by an administrator and installed for all users, it also adds Windows Firewall rules for UDP 5004 (RTP ingest), UDP 8443 (ICE), and TCP 8080 (listener HTTP). The installer is unsigned, so Windows SmartScreen may warn until a code-signing certificate is used.
+
+Settings stay in `%LOCALAPPDATA%\HERTZ` and are not removed by the uninstaller. IIS is not required; the embedded admin app is the web server.
+
 ```text
 %LOCALAPPDATA%\HERTZ\config.json
 %LOCALAPPDATA%\HERTZ\engine\hertz-engine.exe
@@ -240,6 +253,7 @@ Latest local artifacts (2026-11-07):
 | File | Bytes | SHA-256 |
 |---|---:|---|
 | `dist\HERTZ.exe` | 24,089,088 | `8189D8574D47781CB3FE3FDF400126D52AD3623EAAFC927B2710A53F0B589C37` |
+| `dist\HERTZ-Setup-0.1.0.exe` | 7,490,082 | `B30731ADBB77C9A446DBC7FBD6D3EA8F37477FAB5F10081619C489A022F63055` |
 | `dist\HERTZ-windows-x64.zip` | 9,745,791 | `31374A7322576E35D468283F531C33464A3E0615B3E0D85F1ACAF425EE195495` |
 
 The admin listener is loopback-only and rejects foreign `Host`/`Origin` headers. See **[docs/ADMIN.md](docs/ADMIN.md)** for setup, firewall, tray, butt configuration, TURN, and troubleshooting.

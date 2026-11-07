@@ -1,0 +1,29 @@
+HERTZ is installed.
+
+First launch
+------------
+HERTZ starts in the system tray. On first launch it opens the setup page in
+your browser:
+
+  http://127.0.0.1:8090/setup
+
+After setup, the console hides and HERTZ keeps running in the tray. To quit,
+right-click the HERTZ icon next to the clock and choose Quit.
+
+Windows Firewall
+----------------
+If you installed HERTZ for the current user only, the installer cannot add
+firewall rules. Windows may ask for network access when the engine starts;
+allow UDP 5004 (RTP ingest) and UDP 8443 (ICE), plus TCP 8080 (listener web)
+on Private networks. If you install for all users (administrator), the
+installer adds these rules automatically.
+
+Public links
+------------
+Admin UI (local only):     http://127.0.0.1:8090/
+WebRTC listener page:      http://<this-machine-ip>:8080/listen
+Direct Ogg/Opus for VLC:   http://<this-machine-ip>:8080/live.ogg
+Public metadata JSON:      http://<this-machine-ip>:8080/v1/public/status
+
+Settings and logs stay in %LOCALAPPDATA%\HERTZ and are not removed by the
+uninstaller.
