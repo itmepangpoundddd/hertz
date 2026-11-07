@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HERTZ — Listen</title>
+<style>
+  :root { color-scheme: dark; font: 16px/1.5 system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:grid; place-items:center; background:#0b0f14; color:#eef3f8; }
+  .card { width:min(420px,92vw); padding:2rem; border:1px solid #243140; border-radius:20px; background:#111923; text-align:center; box-shadow:0 20px 60px #0008; }
+  .logo { font-weight:800; letter-spacing:.18em; color:#7dd3fc; font-size:.8rem; }
+  h1 { margin:.5rem 0 .25rem; font-size:1.6rem; }
+  p { color:#9fb0c3; margin:.5rem 0 1.4rem; }
+  button { font:inherit; font-weight:650; border:0; border-radius:12px; padding:.9rem 1.4rem; cursor:pointer; background:#2d6cdf; color:white; width:100%; }
+  button:disabled { opacity:.55; cursor:default; }
+  #audio { width:100%; margin-top:1.2rem; }
+  #status { min-height:1.5rem; margin-top:1rem; color:#9fb0c3; }
+  #error { color:#ff9b9b; white-space:pre-wrap; margin-top:.75rem; }
+  .good { color:#86efac !important; }
+  .bad { color:#ff9b9b !important; }
+
+  /* Compact player for iframe embeds: /listen?embed=1#t=... */
+  body.embed { display:block; min-height:0; background:#0b0f14; }
+  body.embed .card {
+    width:100%; min-height:120px; padding:12px 14px;
+    display:grid; grid-template-columns:auto minmax(0,1fr); gap:8px 12px;
+    align-items:center; text-align:left; border-radius:14px; box-shadow:none;
+  }
+  body.embed .logo, body.embed h1, body.embed #subtitle { display:none; }
+  body.embed button { width:auto; padding:.6rem 1rem; }
+  body.embed #audio { width:100%; margin:0; }
+  body.embed #status { grid-column:1 / -1; min-height:0; margin:0; font-size:.78rem; }
+  body.embed #error { grid-column:1 / -1; margin:0; font-size:.78rem; }
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="logo">HERTZ</div>
+  <h1>Listen live</h1>
+  <p id="subtitle">Tap the button below to start listening.</p>
+  <button id="play">▶ Start listening</button>
+  <audio id="audio" controls playsinline></audio>
+  <div id="status">Ready</div>
+  <div id="error" role="alert"></div>
+</main>
+<script>
+(() => {
+  if (new URLSearchParams(location.search).get("embed") === "1") {
+    document.body.classList.add("embed");
+  }
+  const $ = (id) => document.getElementById(id);
+  const token = new URLSearchParams(location.hash.slice(1)).get("t") ||
+                new URLSearchParams(location.hash.slice(1)).get("token");
+  let pc = null, sessionId = null, poll = null, started = false;
+
+  function setStatus(text, cls) {
+    $("status").textContent = text;
+    $("status").className = cls || "";
+  }
+  function setError(text) {
+    $("error").textContent = text || "";
+  }
+  async function api(path, opts = {}) {
+    const headers = Object.assign({}, opts.headers || {});
+    if (token) headers.Authorization = "Bearer " + token;
+    if (opts.body) headers["Content-Type"] = "application/json";
+    const res = await fetch(path, Object.assign({}, opts, { headers }));
+    const text = await res.text();
+    let body; try { body = text ? JSON.parse(text) : null; } catch { body = text; }
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}: ${typeof body === "string" ? body : JSON.stringify(body)}`);
+    return body;
+  }
+  function waitICE(peer) {
+    if (peer.iceGatheringState === "complete") return Promise.resolve();
+    return new Promise((resolve) => {
+      const done = () => { if (peer.iceGatheringState === "complete") { peer.removeEventListener("icegatheringstatechange", done); resolve(); } };
+      peer.addEventListener("icegatheringstatechange", done);
+      setTimeout(resolve, 5000);
+    });
+  }
+  async function start() {
+    if (started) return;
+    started = true;
+    setError(""); setStatus("Connecting…"); $("play").disabled = true;
+    if (!token) {
+      setStatus("Invalid link", "bad");
+      setError("No token found in this link. Ask the administrator for a new link.");
+      return;
+    }
+    try {
+      const cfg = await api("/v1/config");
+      pc = new RTCPeerConnection({ iceServers: cfg.ice_servers || [] });
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === "connected") setStatus("Listening", "good");
+        if (pc.connectionState === "failed" || pc.connectionState === "disconnected") setStatus("Connection lost", "bad");
+      };
+      pc.ontrack = (ev) => {
+        $("audio").srcObject = ev.streams[0] || new MediaStream([ev.track]);
+        $("audio").play().catch(() => setStatus("Tap play on the audio player", ""));
+      };
+      pc.addTransceiver("audio", { direction: "recvonly" });
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await waitICE(pc);
+      const res = await api("/v1/subscribe", {
+        method: "POST",
+        body: JSON.stringify({ stream_id: cfg.stream_id, sdp: pc.localDescription.sdp }),
+      });
+      sessionId = res.session_id;
+      await pc.setRemoteDescription(res.answer);
+      setStatus("Connected, waiting for audio…", "good");
+      $("subtitle").textContent = "Live audio from HERTZ";
+      startPolling();
+    } catch (e) {
+      setStatus("Could not connect", "bad");
+      setError(String(e));
+    }
+  }
+  function startPolling() {
+    if (poll) clearInterval(poll);
+    poll = setInterval(async () => {
+      if (!sessionId) return;
+      try {
+        const st = await api("/v1/sessions/" + encodeURIComponent(sessionId));
+        if (st.state === "connected") setStatus("Listening", "good");
+        if (st.loss_ratio > 0.05) setStatus("Poor signal (loss " + (st.loss_ratio * 100).toFixed(1) + "%)", "bad");
+      } catch (e) {
+        setStatus("Could not check status", "bad");
+      }
+    }, 3000);
+  }
+  $("play").addEventListener("click", start);
+  window.addEventListener("beforeunload", () => {
+    if (pc) pc.close();
+    if (poll) clearInterval(poll);
+  });
+  if (!token) {
+    $("subtitle").textContent = "This link has no token";
+    setStatus("Invalid link", "bad");
+  }
+})();
+</script>
+</body>
+</html>

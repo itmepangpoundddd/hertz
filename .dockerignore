@@ -1,0 +1,7 @@
+.git
+bin
+*.exe
+*.test
+test.opus
+test.wav
+README.md

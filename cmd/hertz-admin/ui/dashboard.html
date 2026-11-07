@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>HERTZ — Dashboard</title>
+<link rel="icon" href="/assets/icon.png">
+<link rel="stylesheet" href="/assets/style.css?v=2">
+<script src="/assets/app.js?v=2" defer></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <img src="/assets/icon.png" alt="">
+      <div>
+        <h1>HERTZ</h1>
+        <p>Live audio streaming</p>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <div class="top-actions">
+      <span class="pill" id="status-pill">Connecting…</span>
+      <span class="version" id="version"></span>
+      <a class="btn btn-ghost btn-sm" href="/settings">Settings</a>
+    </div>
+  </header>
+
+  <div id="warnings" class="banner hidden"><ul id="warning-list"></ul></div>
+
+  <section class="grid hero" style="margin-bottom:16px">
+    <div class="card hero-card">
+      <div>
+        <div class="hero-label">Source status</div>
+        <div class="hero-value"><span class="live-dot" id="live-dot"></span><span id="source-state">Checking…</span></div>
+      </div>
+      <div class="hero-note" id="source-note">Waiting for HERTZ engine data</div>
+    </div>
+    <div class="card hero-card">
+      <div>
+        <div class="hero-label">Source bitrate</div>
+        <div class="hero-value" id="bitrate">0 <small>kbps</small></div>
+      </div>
+      <div class="hero-note" id="bitrate-note">ABR target: —</div>
+    </div>
+    <div class="card hero-card">
+      <div>
+        <div class="hero-label">Connected listeners</div>
+        <div class="hero-value" id="listeners">0 <small>listeners</small></div>
+      </div>
+      <div class="hero-note" id="listeners-note">0 active sessions</div>
+    </div>
+  </section>
+
+  <section class="grid cards" style="margin-bottom:16px">
+    <div class="card">
+      <h2>Listener link</h2>
+      <p class="sub">Share this link or QR code with listeners — they do not install anything and never see the token</p>
+
+      <div class="share">
+        <div class="qr-box" id="qr-box">
+          <div class="empty" id="qr-empty">Generating QR…</div>
+          <img id="qr" class="hidden" alt="QR code for the listener link">
+        </div>
+        <div>
+          <div class="field" style="margin-bottom:8px">
+            <label for="ttl">Link lifetime</label>
+            <select id="ttl">
+              <option value="1">1 hour</option>
+              <option value="6">6 hours</option>
+              <option value="24">24 hours</option>
+              <option value="72">3 days</option>
+              <option value="168">7 days</option>
+              <option value="720">30 days</option>
+            </select>
+          </div>
+          <div class="link-box">
+            <input id="share-url" readonly value="Generating link…" aria-label="Listener link">
+            <button class="btn btn-ghost btn-sm" id="copy-link" type="button" title="Copy link">Copy</button>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary btn-sm" id="new-link" type="button">Create new link</button>
+            <button class="btn btn-ghost btn-sm" id="open-link" type="button">Open listener page</button>
+          </div>
+          <p class="hint" id="share-expiry" style="margin:10px 0 0">The link expires after the selected time. Create a new one when it expires.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Audio source (butt / mixer)</h2>
+      <p class="sub">In butt, open <b>Settings → Add server</b> and choose type <b>HERTZ RTP</b></p>
+
+      <div class="publisher-box" id="publisher-box">
+        Type: <b>HERTZ RTP</b><br>
+        Address: <b id="pub-host">—</b><br>
+        Port: <b id="pub-port">—</b><br>
+        Codec: <b>Opus</b>, 48,000 Hz, Stereo, 128–256 kbps<br>
+        Stream ID: <b id="pub-stream">—</b>
+      </div>
+
+      <div class="actions" style="margin-top:12px">
+        <button class="btn btn-ghost btn-sm" id="copy-publisher" type="button">Copy Address:Port</button>
+        <a class="btn btn-ghost btn-sm" href="/listen" target="_blank" rel="noopener">Open listener page</a>
+      </div>
+      <p class="hint" style="margin:10px 0 0">
+        UDP has no delivery confirmation — check source status above.
+        If it does not show “On air”, check the UDP firewall rules and the source CIDR.
+      </p>
+    </div>
+  </section>
+
+  <section style="margin-bottom:16px">
+    <div class="card">
+      <h2>Embed the player on your website</h2>
+      <p class="sub">Paste this snippet into your page. Listeners get a compact player and still never see the token.</p>
+
+      <pre class="embed-code" id="embed-code">Generating embed code…</pre>
+
+      <div class="actions" style="margin-top:12px">
+        <button class="btn btn-primary btn-sm" id="copy-embed" type="button">Copy embed code</button>
+        <button class="btn btn-ghost btn-sm" id="preview-embed" type="button">Preview embedded player</button>
+      </div>
+      <p class="hint" style="margin:10px 0 0">
+        The admin page blocks frames by design, so use Preview to open the player in a new tab.
+        A page served over HTTPS cannot embed an HTTP player (mixed content).
+      </p>
+    </div>
+  </section>
+
+  <section class="grid cards" style="margin-bottom:16px">
+    <div class="card">
+      <h2>Direct audio & metadata</h2>
+      <p class="sub">Use these URLs in VLC or a custom player. The audio is Ogg/Opus and does not expose the listener token.</p>
+
+      <div class="field">
+        <label for="audio-url">Direct audio (VLC / Ogg player)</label>
+        <div class="link-box" style="margin:0">
+          <input id="audio-url" readonly value="Loading…" aria-label="Direct audio URL">
+          <button class="btn btn-ghost btn-sm" id="copy-audio" type="button">Copy</button>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:12px">
+        <label for="metadata-url">Public metadata (JSON)</label>
+        <div class="link-box" style="margin:0">
+          <input id="metadata-url" readonly value="Loading…" aria-label="Public metadata URL">
+          <button class="btn btn-ghost btn-sm" id="copy-metadata" type="button">Copy</button>
+        </div>
+      </div>
+
+      <p class="hint">VLC: Media → Open Network Stream → paste the audio URL. The metadata URL returns listener counts and now-playing data.</p>
+    </div>
+
+    <div class="card">
+      <h2>Now playing</h2>
+      <p class="sub">Update the song title shown by the public metadata endpoint.</p>
+
+      <div class="field">
+        <label for="np-title">Title</label>
+        <input id="np-title" maxlength="200" placeholder="Song title">
+      </div>
+      <div class="field">
+        <label for="np-artist">Artist</label>
+        <input id="np-artist" maxlength="200" placeholder="Artist">
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary btn-sm" id="np-save" type="button">Save now playing</button>
+        <button class="btn btn-ghost btn-sm" id="np-clear" type="button">Clear</button>
+      </div>
+      <p class="hint" id="np-status" style="margin:10px 0 0">Not set</p>
+    </div>
+  </section>
+
+  <section class="grid cards">
+    <div class="card">
+      <h2>HERTZ engine</h2>
+      <p class="sub" id="engine-sub">Check engine status and active ports</p>
+      <dl class="kv">
+        <div><dt>Engine</dt><dd id="engine-state">—</dd></div>
+        <div><dt>HTTP / Listener</dt><dd class="mono" id="engine-http">—</dd></div>
+        <div><dt>RTP Ingest (UDP)</dt><dd class="mono" id="engine-ingest">—</dd></div>
+        <div><dt>ICE (UDP)</dt><dd class="mono" id="engine-ice">—</dd></div>
+        <div><dt>Metrics</dt><dd class="mono" id="engine-metrics">—</dd></div>
+        <div><dt>Uptime</dt><dd id="engine-uptime">—</dd></div>
+        <div><dt>Log</dt><dd class="mono small" id="engine-log">—</dd></div>
+      </dl>
+      <div class="actions" style="margin-top:16px">
+        <button class="btn btn-primary btn-sm" id="engine-restart" type="button">Restart engine</button>
+        <button class="btn btn-danger btn-sm" id="engine-stop" type="button">Stop engine</button>
+        <button class="btn btn-ghost btn-sm" id="engine-start" type="button">Start engine</button>
+        <button class="btn btn-ghost btn-sm" id="open-logs" type="button">Open log folder</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="flex:1">
+          <h2>Recent log</h2>
+          <p class="sub">Direct engine output — use it to diagnose startup and ingest problems</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="refresh-logs" type="button">Refresh</button>
+      </div>
+      <pre class="logs" id="logs">Loading log…</pre>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span id="last-updated">Updating…</span>
+    <span>HERTZ — Audio-only WebRTC SFU · Admin page available on this machine only</span>
+  </footer>
+</div>
+
+<script>
+(() => {
+  let currentShare = null;
+  let lastStatus = null;
+  let shareLoading = false;
+  let nowPlayingLoaded = false;
+
+  const $ = (id) => document.getElementById(id);
+
+  function setPill(text, kind) {
+    const el = $("status-pill");
+    el.textContent = text;
+    el.className = "pill " + (kind || "");
+  }
+
+  function renderWarnings(list) {
+    const box = $("warnings");
+    const ul = $("warning-list");
+    ul.textContent = "";
+    if (!list || list.length === 0) { box.classList.add("hidden"); return; }
+    for (const w of list) {
+      const li = document.createElement("li");
+      li.textContent = w;
+      ul.appendChild(li);
+    }
+    box.classList.remove("hidden");
+  }
+
+  function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[c]));
+  }
+
+  function embedURL(shareUrl) {
+    const u = new URL(shareUrl, location.href);
+    u.searchParams.set("embed", "1");
+    return u.toString();
+  }
+
+  function renderEmbed() {
+    if (!currentShare || !currentShare.url) {
+      $("embed-code").textContent = "Create a listener link to generate the embed code.";
+      return;
+    }
+    const src = embedURL(currentShare.url);
+    $("embed-code").textContent =
+      '<iframe src="' + escapeHTML(src) + '" width="100%" height="140" ' +
+      'style="border:0;border-radius:12px" allow="autoplay" title="HERTZ live audio"></iframe>';
+  }
+
+  function render(st) {
+    lastStatus = st;
+    $("version").textContent = "v" + st.version;
+
+    let pill = "Connecting…", kind = "";
+    let sourceState = "Checking…";
+    let sourceNote = "Waiting for HERTZ engine data";
+    let dotOn = false;
+
+    if (!st.setup_complete) {
+      pill = "Not configured"; kind = "warn"; sourceState = "Not configured";
+    } else if (st.engine.starting) {
+      pill = "Starting…"; kind = "warn"; sourceState = "Starting…";
+      sourceNote = "The engine is starting and checking ports";
+    } else if (!st.engine.running) {
+      pill = "Engine stopped"; kind = "bad"; sourceState = "Engine stopped";
+      sourceNote = "Press “Start engine” on the right, or start it from the system tray";
+    } else if (!st.engine.healthy) {
+      pill = "Not responding"; kind = "bad"; sourceState = "Engine not responding";
+      sourceNote = "Retrying — check the log below";
+    } else if (st.source.online) {
+      pill = "On air"; kind = "good"; sourceState = "On air"; dotOn = true;
+      sourceNote = "Audio received " + HZ.fmtAge(st.source.last_seen_age_seconds) +
+        " · " + HZ.fmtNum(st.source.packets_total) + " packets";
+    } else {
+      pill = "Waiting for source"; kind = "warn"; sourceState = "Waiting for source";
+      sourceNote = "No RTP yet — start butt and connect it to the ingest port";
+    }
+    setPill(pill, kind);
+
+    $("source-state").textContent = sourceState;
+    $("source-note").textContent = sourceNote;
+    $("live-dot").className = "live-dot" + (dotOn ? " on" : "");
+
+    $("bitrate").innerHTML = HZ.fmtBps(st.source.bitrate_bps).replace(" kbps", " <small>kbps</small>")
+      .replace(" Mbps", " <small>Mbps</small>");
+    $("bitrate-note").textContent = st.target_bitrate_bps > 0
+      ? "ABR target: " + HZ.fmtBps(st.target_bitrate_bps)
+      : "No ABR data yet";
+
+    $("listeners").innerHTML = HZ.fmtNum(st.listeners) + " <small>listeners</small>";
+    $("listeners-note").textContent = HZ.fmtNum(st.sessions_active) + " active sessions" +
+      (st.dropped_packets > 0 ? " · " + HZ.fmtNum(st.dropped_packets) + " dropped packets" : "");
+
+    const p = st.publisher || {};
+    $("pub-host").textContent = p.host || "—";
+    $("pub-port").textContent = p.port || "—";
+    $("pub-stream").textContent = p.stream_id || "—";
+
+    $("audio-url").value = st.audio_url || "";
+    $("metadata-url").value = st.metadata_url || "";
+    if (!nowPlayingLoaded) {
+      const np = st.now_playing;
+      if (np && (np.title || np.artist)) {
+        $("np-title").value = np.title || "";
+        $("np-artist").value = np.artist || "";
+        $("np-status").textContent = np.updated_at
+          ? "Updated " + new Date(np.updated_at).toLocaleString("en-US")
+          : "Set";
+      } else {
+        $("np-status").textContent = "Not set";
+      }
+      nowPlayingLoaded = true;
+    }
+
+    const e = st.engine;
+    const engineText = e.starting ? "Starting…"
+      : e.running ? (e.healthy ? "Running normally" : "Running but slow to respond")
+      : "Stopped";
+    $("engine-state").textContent = engineText + (e.managed === false && e.running ? " (externally managed)" : "");
+    $("engine-state").className = e.running && e.healthy ? "good" : (e.running ? "warn" : "bad");
+    $("engine-http").textContent = ":" + e.http_port;
+    $("engine-ingest").textContent = ":" + e.ingest_port;
+    $("engine-ice").textContent = ":" + e.ice_port;
+    $("engine-metrics").textContent = ":" + e.metrics_port;
+    $("engine-uptime").textContent = HZ.fmtDuration(st.uptime_seconds);
+    $("engine-log").textContent = (e.log_path || "—").replace(/[\\/][^\\/]+$/, "");
+
+    $("engine-start").classList.toggle("hidden", e.running);
+    $("engine-stop").classList.toggle("hidden", !e.running);
+    $("engine-restart").classList.toggle("hidden", !e.running);
+    const external = e.running && e.managed === false;
+    $("engine-stop").disabled = external;
+    $("engine-restart").disabled = external;
+    if (external) {
+      $("engine-sub").textContent = "HERTZ was started by another program — it cannot be stopped or restarted from this page";
+    } else {
+      $("engine-sub").textContent = "Check engine status and active ports";
+    }
+
+    renderWarnings(st.warnings);
+    $("last-updated").textContent = "Updated " + new Date().toLocaleTimeString("en-US");
+
+    if (!shareLoading && !currentShare) {
+      const sel = $("ttl");
+      const ttl = String(st.settings.link_ttl_hours || 24);
+      if (!Array.from(sel.options).some((o) => o.value === ttl)) {
+        const opt = document.createElement("option");
+        opt.value = ttl; opt.textContent = ttl + " hours";
+        sel.appendChild(opt);
+      }
+      sel.value = ttl;
+      loadShare();
+    }
+  }
+
+  async function refresh() {
+    if (document.hidden) return;
+    try {
+      const st = await HZ.api("/api/status");
+      render(st);
+    } catch (err) {
+      setPill("Cannot reach the admin page", "bad");
+      renderWarnings(["Cannot reach the admin page: " + err.message]);
+    }
+  }
+
+  async function loadShare() {
+    if (shareLoading) return;
+    shareLoading = true;
+    $("share-url").value = "Generating link…";
+    $("qr-empty").textContent = "Generating QR…";
+    $("qr-empty").classList.remove("hidden");
+    $("qr").classList.add("hidden");
+    try {
+      const ttl = $("ttl").value || "24";
+      const share = await HZ.api("/api/share?ttl=" + encodeURIComponent(ttl));
+      currentShare = share;
+      $("share-url").value = share.url;
+      $("qr").src = share.qr;
+      $("qr").classList.remove("hidden");
+      $("qr-empty").classList.add("hidden");
+      const when = new Date(share.expires_at);
+      $("share-expiry").textContent = "This link expires " + when.toLocaleString("en-US") +
+        " — after that, press “Create new link”";
+      renderEmbed();
+    } catch (err) {
+      currentShare = null;
+      $("share-url").value = "Could not create the link: " + err.message;
+      $("qr-empty").textContent = "Could not generate the QR code";
+      $("embed-code").textContent = "Create a listener link to generate the embed code.";
+      HZ.toast("Could not create the listener link: " + err.message, "bad");
+    } finally {
+      shareLoading = false;
+    }
+  }
+
+  async function saveNowPlaying(title, artist) {
+    const button = $("np-save");
+    button.disabled = true;
+    try {
+      await HZ.api("/api/nowplaying", {
+        method: "POST",
+        body: JSON.stringify({ title, artist }),
+      });
+      nowPlayingLoaded = true;
+      if (title || artist) {
+        HZ.toast("Now playing updated", "good");
+        $("np-status").textContent = "Updated " + new Date().toLocaleString("en-US");
+      } else {
+        HZ.toast("Now playing cleared", "good");
+        $("np-status").textContent = "Not set";
+      }
+    } catch (err) {
+      HZ.toast(err.message, "bad");
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  function bind() {
+    $("copy-link").addEventListener("click", async () => {
+      if (!currentShare) { await loadShare(); }
+      if (!currentShare) return;
+      try { await HZ.copy(currentShare.url); HZ.toast("Listener link copied", "good"); }
+      catch (err) { HZ.toast(err.message, "bad"); }
+    });
+    $("new-link").addEventListener("click", loadShare);
+    $("ttl").addEventListener("change", loadShare);
+    $("open-link").addEventListener("click", () => {
+      if (currentShare) window.open(currentShare.url, "_blank", "noopener");
+    });
+    $("copy-publisher").addEventListener("click", async () => {
+      if (!lastStatus) return;
+      const p = lastStatus.publisher || {};
+      try {
+        await HZ.copy((p.host || "") + ":" + (p.port || ""));
+        HZ.toast("Publisher address copied", "good");
+      } catch (err) { HZ.toast(err.message, "bad"); }
+    });
+    $("copy-embed").addEventListener("click", async () => {
+      if (!currentShare) return;
+      try { await HZ.copy($("embed-code").textContent); HZ.toast("Embed code copied", "good"); }
+      catch (err) { HZ.toast(err.message, "bad"); }
+    });
+    $("preview-embed").addEventListener("click", () => {
+      if (!currentShare) return;
+      window.open(embedURL(currentShare.url), "_blank", "noopener");
+    });
+    $("copy-audio").addEventListener("click", async () => {
+      try { await HZ.copy($("audio-url").value); HZ.toast("Audio URL copied", "good"); }
+      catch (err) { HZ.toast(err.message, "bad"); }
+    });
+    $("copy-metadata").addEventListener("click", async () => {
+      try { await HZ.copy($("metadata-url").value); HZ.toast("Metadata URL copied", "good"); }
+      catch (err) { HZ.toast(err.message, "bad"); }
+    });
+    $("np-save").addEventListener("click", () => saveNowPlaying($("np-title").value.trim(), $("np-artist").value.trim()));
+    $("np-clear").addEventListener("click", () => {
+      $("np-title").value = "";
+      $("np-artist").value = "";
+      saveNowPlaying("", "");
+    });
+
+    async function engineAction(action) {
+      const buttons = [$("engine-start"), $("engine-stop"), $("engine-restart")];
+      buttons.forEach((b) => { b.disabled = true; });
+      HZ.toast(action === "restart" ? "Restarting the engine…" : "Working…", "warn");
+      try {
+        await HZ.api("/api/engine", { method: "POST", body: JSON.stringify({ action }) });
+        HZ.toast("Done. Refreshing status…", "good");
+      } catch (err) {
+        HZ.toast(err.message, "bad");
+      } finally {
+        buttons.forEach((b) => { b.disabled = false; });
+        setTimeout(refresh, 800);
+      }
+    }
+    $("engine-restart").addEventListener("click", () => engineAction("restart"));
+    $("engine-stop").addEventListener("click", () => engineAction("stop"));
+    $("engine-start").addEventListener("click", () => engineAction("start"));
+
+    $("open-logs").addEventListener("click", async () => {
+      try { await HZ.api("/api/open", { method: "POST", body: JSON.stringify({ target: "logs" }) }); }
+      catch (err) { HZ.toast(err.message, "bad"); }
+    });
+
+    $("refresh-logs").addEventListener("click", loadLogs);
+  }
+
+  async function loadLogs() {
+    const pre = $("logs");
+    pre.textContent = "Loading log…";
+    try {
+      const res = await HZ.api("/api/logs?lines=120");
+      pre.textContent = res.lines && res.lines.trim() ? res.lines : "(no log entries yet)";
+    } catch (err) {
+      pre.textContent = "Could not load the log: " + err.message;
+    }
+  }
+
+  function start() {
+    if (!window.HZ) { setTimeout(start, 60); return; }
+    bind();
+    refresh();
+    loadLogs();
+    setInterval(refresh, 3000);
+    setInterval(() => { if (!document.hidden) loadLogs(); }, 15000);
+  }
+
+  start();
+})();
+</script>
+</body>
+</html>

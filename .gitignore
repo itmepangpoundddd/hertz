@@ -1,0 +1,41 @@
+bin/
+*.exe
+*.test
+*.out
+coverage.*
+.idea/
+.vscode/
+.DS_Store
+test.opus
+test.wav
+.env
+.env.*
+!.env.example
+
+# Local release/build artifacts
+dist/*.zip
+cmd/hertz-admin/rsrc_windows_amd64.syso
+
+# butt-master autotools/make output (keep configure.ac, Makefile.am, configure, Makefile.in)
+butt-master/autom4te.cache/
+butt-master/config.h
+butt-master/config.h.in~
+butt-master/config.log
+butt-master/config.status
+butt-master/Makefile
+butt-master/src/Makefile
+butt-master/stamp-h1
+butt-master/src/.deps/
+butt-master/src/.libs/
+butt-master/**/.deps/
+butt-master/**/.libs/
+butt-master/dist/
+butt-master/usr/
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+
+# Agent metadata
+.opencode/

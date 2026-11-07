@@ -1,0 +1,43 @@
+services:
+  hertz:
+    build: .
+    environment:
+      # Local demo only. Replace with a real secret and disable dev auth.
+      HERTZ_ALLOW_INSECURE_DEV: "true"
+      HERTZ_AUTH_SECRET: "0123456789abcdef0123456789abcdef"
+      HERTZ_HTTP_ADDR: ":8080"
+      HERTZ_METRICS_ADDR: ":9090"
+      HERTZ_STREAM_ID: "main"
+      HERTZ_INGEST_ADDR: ":5004"
+      HERTZ_INGEST_PT: "111"
+      HERTZ_INGEST_ALLOWED_CIDRS: "127.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+      HERTZ_JITTER_WINDOW: "40ms"
+      HERTZ_ICE_UDP_PORT: "8443"
+      # Demo: browser and FFmpeg run on the Docker host. Change this to the
+      # node's public IP in production.
+      HERTZ_PUBLIC_IP: "127.0.0.1"
+      HERTZ_ICE_LOOPBACK: "false"
+      HERTZ_MAX_SESSIONS: "5000"
+      HERTZ_MAX_SESSIONS_PER_IP: "8"
+      HERTZ_LOG_LEVEL: "info"
+    ports:
+      - "8080:8080/tcp"
+      - "9090:9090/tcp"
+      - "8443:8443/udp"
+      - "5004:5004/udp"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    volumes:
+      - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9091:9090"
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HERTZ listener test</title>
+<style>
+  :root { color-scheme: dark; font: 15px/1.45 system-ui, sans-serif; }
+  body { max-width: 860px; margin: 2rem auto; padding: 0 1rem; background:#111; color:#eee; }
+  label { display:block; margin:.6rem 0 .2rem; color:#bbb; }
+  input, button { font:inherit; padding:.55rem .7rem; border-radius:8px; border:1px solid #444; background:#1b1b1b; color:#eee; }
+  input { width:100%; box-sizing:border-box; }
+  button { cursor:pointer; background:#2d6cdf; border-color:#2d6cdf; margin:.8rem .4rem 0 0; }
+  button.secondary { background:#333; border-color:#444; }
+  pre { background:#181818; border:1px solid #333; border-radius:8px; padding:1rem; overflow:auto; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  @media (max-width:700px){ .row{grid-template-columns:1fr;} }
+  #state { color:#9cdcfe; }
+  #error { color:#ff8a8a; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<h1>HERTZ listener test</h1>
+<p>Single-file browser smoke test. It requests a token from you, subscribes to a stream, plays audio, and polls <code>GET /v1/sessions/{id}</code>.</p>
+
+<div class="row">
+  <div>
+    <label for="api">API base URL</label>
+    <input id="api" value="http://127.0.0.1:8080">
+  </div>
+  <div>
+    <label for="stream">Stream ID</label>
+    <input id="stream" value="main">
+  </div>
+</div>
+
+<label for="token">Bearer token (not stored)</label>
+<input id="token" type="password" autocomplete="off" placeholder="paste token from cmd/token">
+
+<button id="connect">Connect</button>
+<button id="disconnect" class="secondary">Disconnect</button>
+
+<p>State: <strong id="state">idle</strong></p>
+<p id="error" role="alert"></p>
+<audio id="audio" controls autoplay></audio>
+
+<h2>Session stats</h2>
+<pre id="stats">not connected</pre>
+
+<h2>Raw config</h2>
+<pre id="config">not loaded</pre>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  let pc = null, sessionId = null, pollTimer = null, apiBase = "", token = "";
+
+  const setError = (e) => { $("error").textContent = e ? String(e) : ""; };
+  const setState = (s) => { $("state").textContent = s; };
+
+  async function api(path, options = {}) {
+    const headers = Object.assign({}, options.headers || {});
+    if (token) headers.Authorization = "Bearer " + token;
+    if (options.body) headers["Content-Type"] = "application/json";
+    const res = await fetch(apiBase + path, Object.assign({}, options, { headers }));
+    const text = await res.text();
+    let body;
+    try { body = text ? JSON.parse(text) : null; } catch { body = text; }
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}: ${typeof body === "string" ? body : JSON.stringify(body)}`);
+    return body;
+  }
+
+  async function waitIceGathering(peer) {
+    if (peer.iceGatheringState === "complete") return;
+    await new Promise((resolve) => {
+      const done = () => {
+        if (peer.iceGatheringState === "complete") {
+          peer.removeEventListener("icegatheringstatechange", done);
+          resolve();
+        }
+      };
+      peer.addEventListener("icegatheringstatechange", done);
+      setTimeout(resolve, 5000);
+    });
+  }
+
+  async function connect() {
+    setError("");
+    setState("connecting");
+    try {
+      apiBase = $("api").value.trim().replace(/\/+$/, "");
+      token = $("token").value.trim();
+      const stream = $("stream").value.trim();
+      if (!apiBase || !token || !stream) throw new Error("API base, token and stream are required");
+
+      const cfg = await api("/v1/config");
+      $("config").textContent = JSON.stringify(cfg, null, 2);
+
+      pc = new RTCPeerConnection({ iceServers: cfg.ice_servers || [] });
+      pc.onconnectionstatechange = () => setState("pc: " + pc.connectionState);
+      pc.oniceconnectionstatechange = () => setState("ice: " + pc.iceConnectionState);
+      pc.ontrack = (ev) => {
+        const streamObj = ev.streams[0] || new MediaStream([ev.track]);
+        $("audio").srcObject = streamObj;
+        $("audio").play().catch(() => {});
+      };
+
+      pc.addTransceiver("audio", { direction: "recvonly" });
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await waitIceGathering(pc);
+
+      const res = await api("/v1/subscribe", {
+        method: "POST",
+        body: JSON.stringify({ stream_id: stream, sdp: pc.localDescription.sdp }),
+      });
+      sessionId = res.session_id;
+      await pc.setRemoteDescription(res.answer);
+      setState("subscribed: " + sessionId);
+      startPolling();
+    } catch (e) {
+      setError(e);
+      setState("failed");
+      cleanup();
+    }
+  }
+
+  function startPolling() {
+    stopPolling();
+    const tick = async () => {
+      if (!sessionId) return;
+      try {
+        const st = await api("/v1/sessions/" + encodeURIComponent(sessionId));
+        $("stats").textContent = JSON.stringify(st, null, 2);
+      } catch (e) {
+        $("stats").textContent = "stats error: " + e;
+      }
+    };
+    tick();
+    pollTimer = setInterval(tick, 2000);
+  }
+
+  function stopPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = null;
+  }
+
+  async function cleanup() {
+    stopPolling();
+    if (pc) {
+      try { pc.close(); } catch {}
+      pc = null;
+    }
+    if (sessionId) {
+      try { await api("/v1/sessions/" + encodeURIComponent(sessionId), { method: "DELETE" }); } catch {}
+      sessionId = null;
+    }
+    $("audio").srcObject = null;
+  }
+
+  async function disconnect() {
+    await cleanup();
+    setState("idle");
+    $("stats").textContent = "not connected";
+  }
+
+  $("connect").addEventListener("click", connect);
+  $("disconnect").addEventListener("click", disconnect);
+})();
+</script>
+</body>
+</html>

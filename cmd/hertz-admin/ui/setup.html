@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>HERTZ — Setup</title>
+<link rel="icon" href="/assets/icon.png">
+<link rel="stylesheet" href="/assets/style.css?v=2">
+<script src="/assets/app.js?v=2" defer></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <img src="/assets/icon.png" alt="">
+      <div>
+        <h1>HERTZ</h1>
+        <p id="brand-sub">Live audio streaming</p>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <div class="top-actions">
+      <span class="pill" id="mode-pill">Loading…</span>
+      <span class="version" id="version"></span>
+      <a class="btn btn-ghost btn-sm hidden" id="dashboard-link" href="/">Dashboard</a>
+    </div>
+  </header>
+
+  <main class="card">
+    <div id="loading" class="muted">Loading settings…</div>
+
+    <form id="form" class="hidden" autocomplete="off">
+      <div class="steps" id="steps">
+        <span class="step on"><b>1</b> Configure</span>
+        <span class="step"><b>2</b> Start</span>
+        <span class="step"><b>3</b> Share listener link</span>
+      </div>
+
+      <h2 id="page-title" style="margin:0 0 6px;font-size:1.35rem">Set up HERTZ for the first time</h2>
+      <p id="page-sub" class="muted" style="margin:0 0 22px">
+        Use the recommended defaults, or adjust the ports and addresses below to match your network.
+      </p>
+
+      <div id="form-error" class="banner bad hidden" role="alert"></div>
+
+      <div class="section-title">
+        <div class="num">1</div>
+        <div>
+          <h2>Stream and listener link</h2>
+          <p>The stream ID is used in the API and the listener URL</p>
+        </div>
+      </div>
+
+      <div class="field-row two">
+        <div class="field">
+          <label for="stream_id">Stream ID</label>
+          <input id="stream_id" name="stream_id" required pattern="[A-Za-z0-9][A-Za-z0-9._\-]{0,63}"
+                 placeholder="main" spellcheck="false">
+          <span class="hint">Use letters, numbers, dots, dashes, or underscores</span>
+        </div>
+        <div class="field">
+          <label for="link_ttl_hours">Listener link lifetime (hours)</label>
+          <input id="link_ttl_hours" name="link_ttl_hours" type="number" min="1" max="720" step="1" required>
+          <span class="hint">New links expire after this many hours (1–720)</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="public_host">Address listeners use to open the link</label>
+        <input id="public_host" name="public_host" required spellcheck="false"
+               placeholder="192.168.1.10 or hertz.example.com">
+        <span class="hint" id="detected-hint">Detecting this machine's IP…</span>
+      </div>
+
+      <div class="section-title" style="margin-top:26px">
+        <div class="num">2</div>
+        <div>
+          <h2>Ports</h2>
+          <p>The defaults work on most machines. Ports must be unique and must not collide with the admin page</p>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="http_port">HTTP / Listener</label>
+          <input id="http_port" name="http_port" type="number" min="1" max="65535" required>
+          <span class="hint">Listener links and signaling (TCP)</span>
+        </div>
+        <div class="field">
+          <label for="metrics_port">Metrics</label>
+          <input id="metrics_port" name="metrics_port" type="number" min="1" max="65535" required>
+          <span class="hint">Prometheus (TCP) — no need to expose it to the internet</span>
+        </div>
+        <div class="field">
+          <label for="ingest_port">RTP Ingest</label>
+          <input id="ingest_port" name="ingest_port" type="number" min="1" max="65535" required>
+          <span class="hint">butt / mixer sends Opus RTP (UDP)</span>
+        </div>
+        <div class="field">
+          <label for="ice_port">ICE / WebRTC</label>
+          <input id="ice_port" name="ice_port" type="number" min="1" max="65535" required>
+          <span class="hint">Audio to listeners (UDP)</span>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:26px">
+        <div class="num">3</div>
+        <div>
+          <h2>Source audio and security</h2>
+          <p>Choose which machines may send RTP to HERTZ</p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="ingest_allowed">Allow RTP from CIDR</label>
+        <textarea id="ingest_allowed" name="ingest_allowed" rows="2" spellcheck="false"
+                  placeholder="127.0.0.1/32,192.168.1.0/24"></textarea>
+        <span class="hint" id="cidr-hint">Comma-separated — leave empty to accept every IP (not recommended on the internet)</span>
+      </div>
+
+      <div class="field-row two">
+        <div class="field">
+          <label for="max_sessions">Maximum concurrent listeners</label>
+          <input id="max_sessions" name="max_sessions" type="number" min="1" max="1000000" required>
+        </div>
+        <div class="field">
+          <label for="max_sessions_per_ip">Maximum listeners per IP</label>
+          <input id="max_sessions_per_ip" name="max_sessions_per_ip" type="number" min="0" max="100000" required>
+          <span class="hint">0 = unlimited</span>
+        </div>
+      </div>
+
+      <details class="advanced">
+        <summary>Advanced: TURN, ICE, and secrets</summary>
+
+        <div class="field-row two">
+          <div class="field">
+            <label for="public_ip">Public IP (1:1 NAT)</label>
+            <input id="public_ip" name="public_ip" spellcheck="false" placeholder="Leave empty if unused">
+            <span class="hint">Use this when the machine sits behind 1:1 NAT that maps a public IP to it</span>
+          </div>
+          <div class="field" style="align-content:end">
+            <label class="check" for="include_loopback">
+              <input id="include_loopback" name="include_loopback" type="checkbox">
+              <span>Enable ICE loopback
+                <small>Let listeners on the same machine as HERTZ connect</small>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="check" for="metrics_public">
+            <input id="metrics_public" name="metrics_public" type="checkbox">
+            <span>Allow remote metrics scraping
+              <small>Opens the TCP metrics port to Prometheus on other machines — off by default</small>
+            </span>
+          </label>
+        </div>
+
+        <div class="field">
+          <label for="turn_urls">TURN URLs</label>
+          <input id="turn_urls" name="turn_urls" spellcheck="false"
+                 placeholder="turn:turn.example.com:3478?transport=udp">
+          <span class="hint">Comma-separated — needed when listeners are outside the LAN and direct NAT traversal fails</span>
+        </div>
+
+        <div class="field-row two">
+          <div class="field">
+            <label for="turn_secret">TURN shared secret</label>
+            <input id="turn_secret" name="turn_secret" type="password" spellcheck="false" placeholder="Leave empty if not using TURN">
+            <span class="hint" id="turn-secret-hint">Use coturn `static-auth-secret` — HERTZ issues short-lived credentials for listeners</span>
+          </div>
+          <div class="field">
+            <label for="turn_ttl_hours">TURN credential lifetime (hours)</label>
+            <input id="turn_ttl_hours" name="turn_ttl_hours" type="number" min="1" max="24" step="1">
+          </div>
+        </div>
+
+        <div class="field hidden" id="rotate-field">
+          <label class="check" for="rotate_secret">
+            <input id="rotate_secret" name="rotate_secret" type="checkbox">
+            <span>Generate a new secret
+              <small>All existing listener links stop working immediately</small>
+            </span>
+          </label>
+        </div>
+      </details>
+
+      <div class="actions" style="margin-top:22px">
+        <button class="btn btn-primary" id="submit" type="submit">Save and start</button>
+        <a class="btn btn-ghost hidden" id="cancel" href="/">Cancel</a>
+      </div>
+      <p class="hint" style="margin-top:12px" id="submit-hint">
+        After saving, HERTZ starts and takes you to the dashboard — the first start can take 10–15 seconds
+      </p>
+      <p class="hint" style="margin-top:6px">
+        Also allow the UDP ingest and ICE ports in Windows Firewall,
+        otherwise sources and listeners on other machines cannot connect
+      </p>
+    </form>
+  </main>
+
+  <footer class="footer">
+    <span>HERTZ — Audio-only WebRTC SFU</span>
+    <span>This admin page is available on this machine only (127.0.0.1)</span>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const mode = location.pathname.startsWith("/settings") ? "settings" : "setup";
+  const form = document.getElementById("form");
+  const submit = document.getElementById("submit");
+  const errorBox = document.getElementById("form-error");
+  const loading = document.getElementById("loading");
+
+  function showError(message) {
+    errorBox.textContent = message;
+    errorBox.classList.remove("hidden");
+    errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  function clearError() {
+    errorBox.classList.add("hidden");
+    errorBox.textContent = "";
+  }
+  function setValue(name, value) {
+    const el = form.elements[name];
+    if (el) el.value = value == null ? "" : value;
+  }
+  function setChecked(name, value) {
+    const el = form.elements[name];
+    if (el) el.checked = !!value;
+  }
+  function number(name) {
+    const n = parseInt(form.elements[name].value, 10);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function collect() {
+    return {
+      stream_id: form.elements.stream_id.value.trim(),
+      http_port: number("http_port"),
+      metrics_port: number("metrics_port"),
+      ingest_port: number("ingest_port"),
+      ice_port: number("ice_port"),
+      public_host: form.elements.public_host.value.trim(),
+      public_ip: form.elements.public_ip.value.trim(),
+      ingest_allowed: form.elements.ingest_allowed.value.trim(),
+      include_loopback: form.elements.include_loopback.checked,
+      metrics_public: form.elements.metrics_public.checked,
+      max_sessions: number("max_sessions"),
+      max_sessions_per_ip: number("max_sessions_per_ip"),
+      turn_urls: form.elements.turn_urls.value.trim(),
+      turn_secret: form.elements.turn_secret.value.trim(),
+      turn_ttl_hours: number("turn_ttl_hours"),
+      link_ttl_hours: number("link_ttl_hours"),
+      rotate_secret: form.elements.rotate_secret ? form.elements.rotate_secret.checked : false,
+    };
+  }
+
+  function setBusy(busy) {
+    submit.disabled = busy;
+    if (busy) {
+      submit.innerHTML = '<span class="spinner"></span> Starting…';
+      document.getElementById("submit-hint").textContent =
+        "Saving and starting HERTZ — keep this page open (this can take 10–15 seconds)";
+    } else {
+      submit.textContent = mode === "settings" ? "Save and restart" : "Save and start";
+      document.getElementById("submit-hint").textContent = mode === "settings"
+        ? "Saving restarts HERTZ automatically — this takes about 10–15 seconds"
+        : "After saving, HERTZ starts and takes you to the dashboard — the first start can take 10–15 seconds";
+    }
+  }
+
+  async function load() {
+    if (!window.HZ) { setTimeout(load, 60); return; }
+    try {
+      const state = await HZ.api("/api/state");
+      if (mode === "setup" && state.setup_complete) { location.replace("/"); return; }
+      if (mode === "settings" && !state.setup_complete) { location.replace("/setup"); return; }
+
+      const s = state.settings;
+      document.getElementById("version").textContent = "v" + state.version;
+      document.getElementById("brand-sub").textContent =
+        mode === "setup" ? "First-time setup" : "System settings";
+      const pill = document.getElementById("mode-pill");
+      pill.textContent = mode === "settings" ? "Settings mode" : "Ready to set up";
+      pill.className = "pill good";
+      document.getElementById("dashboard-link").classList.toggle("hidden", mode !== "settings");
+      document.getElementById("cancel").classList.toggle("hidden", mode !== "settings");
+      document.getElementById("rotate-field").classList.toggle("hidden", mode !== "settings");
+
+      if (mode === "settings") {
+        document.getElementById("page-title").textContent = "HERTZ settings";
+        document.getElementById("page-sub").textContent =
+          "Edit ports, listener address, TURN, and limits — saving restarts HERTZ automatically";
+        document.getElementById("steps").classList.add("hidden");
+        submit.textContent = "Save and restart";
+        document.getElementById("submit-hint").textContent =
+          "Saving restarts HERTZ automatically — this takes about 10–15 seconds";
+      }
+
+      setValue("stream_id", s.stream_id);
+      setValue("link_ttl_hours", s.link_ttl_hours);
+      setValue("public_host", s.public_host);
+      setValue("http_port", s.http_port);
+      setValue("metrics_port", s.metrics_port);
+      setValue("ingest_port", s.ingest_port);
+      setValue("ice_port", s.ice_port);
+      setValue("ingest_allowed", s.ingest_allowed);
+      setValue("max_sessions", s.max_sessions);
+      setValue("max_sessions_per_ip", s.max_sessions_per_ip);
+      setValue("public_ip", s.public_ip);
+      setValue("turn_urls", s.turn_urls);
+      setValue("turn_ttl_hours", s.turn_ttl_hours);
+      setChecked("include_loopback", s.include_loopback);
+      setChecked("metrics_public", s.metrics_public);
+
+      const turnSecret = form.elements.turn_secret;
+      turnSecret.placeholder = s.turn_secret_set
+        ? "Already set — leave empty to keep the current secret"
+        : "Leave empty if not using TURN";
+
+      const detected = state.detected_ip || "";
+      const cidr = state.detected_cidr || "";
+      const hint = document.getElementById("detected-hint");
+      hint.textContent = detected
+        ? "Detected IP: " + detected + " — use this if listeners are on the same LAN"
+        : "Enter the IP address or domain name listeners use to reach this machine";
+      if (detected) {
+        const useBtn = document.createElement("button");
+        useBtn.type = "button";
+        useBtn.className = "btn btn-ghost btn-sm";
+        useBtn.style.marginTop = "8px";
+        useBtn.textContent = "Use detected IP";
+        useBtn.addEventListener("click", () => { form.elements.public_host.value = detected; });
+        hint.appendChild(document.createElement("br"));
+        hint.appendChild(useBtn);
+      }
+      document.getElementById("cidr-hint").textContent = cidr
+        ? "Comma-separated — detected LAN " + cidr + " (empty = accept every IP)"
+        : "Comma-separated — empty means accept every IP (not recommended on the internet)";
+
+      form.classList.remove("hidden");
+      loading.classList.add("hidden");
+
+      if (mode === "setup") {
+        form.elements.stream_id.focus();
+      }
+    } catch (err) {
+      loading.textContent = "Could not load settings: " + err.message;
+      loading.className = "banner bad";
+    }
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    clearError();
+    if (!form.reportValidity()) return;
+    setBusy(true);
+    try {
+      const endpoint = mode === "settings" ? "/api/settings" : "/api/setup";
+      const res = await HZ.api(endpoint, { method: "POST", body: JSON.stringify(collect()) });
+      if (res.warning) {
+        HZ.toast("Saved, but HERTZ did not start: " + res.warning, "warn");
+        setTimeout(() => { location.href = "/"; }, 2600);
+      } else {
+        HZ.toast(mode === "settings" ? "Saved. HERTZ is restarting…" : "Saved. HERTZ is starting…", "good");
+        setTimeout(() => { location.href = res.redirect || "/"; }, 900);
+      }
+    } catch (err) {
+      setBusy(false);
+      showError(err.message);
+    }
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>
