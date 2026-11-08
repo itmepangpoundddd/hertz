@@ -290,9 +290,19 @@ void button_cfg_cb(void)
 */
 
 #ifdef _WIN32
-    fl_g->window_cfg->position(fl_g->window_main->x() +
-                                fl_g->window_main->w()+7,
-                                fl_g->window_main->y());
+    int sw = 0, sh = 0, sx = 0, sy = 0;
+    Fl::screen_work_area(sx, sy, sw, sh, fl_g->window_main->x(), fl_g->window_main->y());
+    int px = fl_g->window_main->x() + fl_g->window_main->w() + 7;
+    int py = fl_g->window_main->y();
+    if(px + fl_g->window_cfg->w() > sx + sw)
+        px = fl_g->window_main->x() - fl_g->window_cfg->w() - 7;
+    if(px < sx)
+        px = sx;
+    if(py + fl_g->window_cfg->h() > sy + sh)
+        py = sy + sh - fl_g->window_cfg->h();
+    if(py < sy)
+        py = sy;
+    fl_g->window_cfg->position(px, py);
 #else
     fl_g->window_cfg->position(fl_g->window_main->x() +
                                 fl_g->window_main->w(),
@@ -877,6 +887,8 @@ void button_record_cb(void)
 
 void button_info_cb()
 {
+    if(fl_g->log_card == NULL)
+        return;
     if (!fl_g->info_visible)
     {
         fl_g->window_main->size(540, 650);

@@ -38,11 +38,9 @@
 #include "icecast.h"
 #include "strfuncs.h"
 #include "hertz_theme.h"
+#include "HzUi.h"
 
-
-/* HERTZ palette: a dark slate UI with the same cyan accent used by the HERTZ
- * admin dashboard. Kept local to the GUI layer so the encoder and ingest code
- * stay unchanged. */
+static void hertz_timer_tick(void*);
 static bool hz_is_window(Fl_Widget *w)
 {
     return w == fl_g->window_main || w == fl_g->window_cfg ||
@@ -117,11 +115,12 @@ static void hz_theme_widget(Fl_Widget *w)
     else if(Fl_Button *button = dynamic_cast<Fl_Button*>(w))
     {
         const char *label = button->label();
-        bool modern_button = label != NULL &&
-            (strcmp(label, "Connect") == 0 || strcmp(label, "Disconnect") == 0 ||
-             strcmp(label, "Record") == 0 || strcmp(label, "Settings") == 0 ||
-             strcmp(label, "Close settings") == 0 || strcmp(label, "Hide log") == 0 ||
-             strcmp(label, "Show log") == 0);
+        bool modern_button = dynamic_cast<HzButton*>(button) != NULL ||
+            (label != NULL &&
+             (strcmp(label, "Connect") == 0 || strcmp(label, "Disconnect") == 0 ||
+              strcmp(label, "Record") == 0 || strcmp(label, "Settings") == 0 ||
+              strcmp(label, "Close settings") == 0 || strcmp(label, "Hide log") == 0 ||
+              strcmp(label, "Show log") == 0));
 
         if(!modern_button)
         {
@@ -136,7 +135,8 @@ static void hz_theme_widget(Fl_Widget *w)
     }
     else if(Fl_Box *box = dynamic_cast<Fl_Box*>(w))
     {
-        bool modern_box = box == fl_g->brand_title || box == fl_g->brand_sub ||
+        bool modern_box = dynamic_cast<HzLabel*>(box) != NULL ||
+            box == fl_g->brand_title || box == fl_g->brand_sub ||
             box == fl_g->status_pill || box == fl_g->status_text ||
             box == fl_g->status_detail || box == fl_g->server_label ||
             box == fl_g->codec_label || box == fl_g->bitrate_label ||
@@ -151,7 +151,8 @@ static void hz_theme_widget(Fl_Widget *w)
 
     if(Fl_Group *group = dynamic_cast<Fl_Group*>(w))
     {
-        if(!hz_is_window(w) && dynamic_cast<Fl_Tabs*>(w) == NULL)
+        if(!hz_is_window(w) && dynamic_cast<Fl_Tabs*>(w) == NULL &&
+           dynamic_cast<HzCard*>(w) == NULL)
         {
             Fl_Boxtype current = group->box();
             if(current == FL_ENGRAVED_FRAME || current == FL_ENGRAVED_BOX ||
@@ -219,63 +220,148 @@ void hertz_apply_theme(void)
     fl_g->window_main->redraw();
     fl_g->window_cfg->redraw();
     hertz_update_status();
+
+    static bool timer_started = false;
+    if(!timer_started)
+    {
+        timer_started = true;
+        Fl::add_timeout(1.0, hertz_timer_tick);
+    }
 }
 
+
+static void hertz_timer_tick(void*)
+{
+    if(fl_g != NULL && fl_g->main_timer != NULL)
+    {
+        if(recording)
+            fl_g->main_timer->copy_label(timer_get_time_str(&rec_timer));
+        else if(connected)
+            fl_g->main_timer->copy_label(timer_get_time_str(&stream_timer));
+        else
+            fl_g->main_timer->label("00:00:00");
+    }
+    Fl::repeat_timeout(1.0, hertz_timer_tick);
+}
 
 void hertz_update_status(void)
 {
     if(fl_g == NULL || fl_g->status_text == NULL)
         return;
 
-    const char *state = "IDLE";
+    const char *state = "Idle";
     const char *detail = "Ready to broadcast";
-    Fl_Color color = HZ_MUTED;
+    Fl_Color dot_color = HZ_ACCENT;
 
     if(recording)
     {
-        state = "RECORDING";
+        state = "Recording";
         detail = "Writing the broadcast to disk";
-        color = HZ_BAD;
+        dot_color = HZ_BAD;
     }
     else if(connected && streaming)
     {
-        state = "ON AIR";
-        detail = "Live audio is being sent";
-        color = HZ_GOOD;
+        state = "On Air";
+        detail = "Streaming smoothly...";
+        dot_color = HZ_GOOD;
     }
     else if(try_connect)
     {
-        state = "CONNECTING";
-        detail = "Waiting for the server";
-        color = HZ_WARN;
+        state = "Connecting";
+        detail = "Waiting for the server...";
+        dot_color = HZ_WARN;
     }
     else if(connected)
     {
-        state = "CONNECTED";
+        state = "Connected";
         detail = "Connected, not streaming";
-        color = HZ_GOOD;
+        dot_color = HZ_GOOD;
     }
 
     fl_g->status_text->label(state);
-    fl_g->status_text->labelcolor(color);
-    fl_g->status_pill->label(state);
-    fl_g->status_pill->labelcolor(color);
+    fl_g->status_text->labelcolor(HZ_TEXT);
     fl_g->status_detail->label(detail);
+    if(fl_g->status_dot != NULL)
+        fl_g->status_dot->labelcolor(dot_color);
 
+    char buf[128];
+    if(fl_g->status_pill != NULL)
+    {
+        snprintf(buf, sizeof(buf), "▂▄▆ %d kbps", cfg.audio.bitrate);
+        fl_g->status_pill->copy_label(buf);
+        fl_g->status_pill->labelcolor(HZ_ACCENT);
+    }
+
+    if(fl_g->main_server_choice != NULL)
+    {
+        if(fl_g->main_server_choice->size() != cfg.main.num_of_srv)
+        {
+            fl_g->main_server_choice->clear();
+            for(int i = 0; i < cfg.main.num_of_srv; i++)
+                fl_g->main_server_choice->add(cfg.srv[i]->name);
+        }
+        if(cfg.selected_srv >= 0 && cfg.selected_srv < fl_g->main_server_choice->size())
+            fl_g->main_server_choice->value(cfg.selected_srv);
+    }
+
+    server_t *srv = NULL;
     if(cfg.main.num_of_srv > 0 && cfg.srv != NULL && cfg.selected_srv >= 0 &&
        cfg.selected_srv < cfg.main.num_of_srv && cfg.srv[cfg.selected_srv] != NULL)
-        fl_g->server_label->copy_label(cfg.srv[cfg.selected_srv]->name);
-    else
-        fl_g->server_label->label("No server selected");
+        srv = cfg.srv[cfg.selected_srv];
+
+    if(fl_g->server_addr != NULL)
+    {
+        if(srv != NULL && srv->addr != NULL && srv->addr[0] != '\0')
+            fl_g->server_addr->copy_label(srv->addr);
+        else
+            fl_g->server_addr->label("—");
+    }
+    if(fl_g->server_port != NULL)
+    {
+        if(srv != NULL)
+        {
+            snprintf(buf, sizeof(buf), "%d", srv->port);
+            fl_g->server_port->copy_label(buf);
+        }
+        else
+            fl_g->server_port->label("—");
+    }
+    if(fl_g->server_mount != NULL)
+    {
+        if(srv != NULL && srv->mount != NULL && srv->mount[0] != '\0')
+            fl_g->server_mount->copy_label(srv->mount);
+        else
+            fl_g->server_mount->label("—");
+    }
+    if(fl_g->server_pass != NULL)
+    {
+        if(srv != NULL && srv->pwd != NULL && srv->pwd[0] != '\0')
+            fl_g->server_pass->label("••••••");
+        else
+            fl_g->server_pass->label("—");
+    }
 
     const char *codec = cfg.audio.codec != NULL ? cfg.audio.codec : "—";
-    char buf[128];
-    snprintf(buf, sizeof(buf), "%s · %d Hz · %s", codec,
-             cfg.audio.samplerate, cfg.audio.channel == 1 ? "Mono" : "Stereo");
-    fl_g->codec_label->copy_label(buf);
+    if(fl_g->encoder_codec != NULL)
+        fl_g->encoder_codec->copy_label(codec);
+    if(fl_g->encoder_bitrate != NULL)
+    {
+        snprintf(buf, sizeof(buf), "%d kbps", cfg.audio.bitrate);
+        fl_g->encoder_bitrate->copy_label(buf);
+    }
+    if(fl_g->encoder_samplerate != NULL)
+    {
+        snprintf(buf, sizeof(buf), "%d Hz", cfg.audio.samplerate);
+        fl_g->encoder_samplerate->copy_label(buf);
+    }
+    if(fl_g->encoder_channels != NULL)
+        fl_g->encoder_channels->label(cfg.audio.channel == 1 ? "Mono" : "Stereo");
 
-    snprintf(buf, sizeof(buf), "%d kbps", cfg.audio.bitrate);
-    fl_g->bitrate_label->copy_label(buf);
+    if(fl_g->main_gain_label != NULL && fl_g->slider_gain != NULL)
+    {
+        snprintf(buf, sizeof(buf), "%.1f dB", fl_g->slider_gain->value());
+        fl_g->main_gain_label->copy_label(buf);
+    }
 
     fl_g->window_main->redraw();
 }

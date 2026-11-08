@@ -13,6 +13,7 @@
 #include <FL/Fl_Group.H>
 #include "Fl_ILM216.h"
 #include "HzVuMeter.h"
+#include "HzUi.h"
 #include "fl_callbacks.h"
 #include "cfg.h"
 #include <FL/Fl_Button.H>
@@ -113,6 +114,7 @@ public:
   Fl_Box *L_VU;
   Fl_Box *brand_title;
   Fl_Box *brand_sub;
+  Fl_Box *status_dot;
   Fl_Box *status_pill;
   Fl_Box *status_text;
   Fl_Box *status_detail;
@@ -123,6 +125,25 @@ public:
   HzVuMeter *vu_display;
   Fl_Group *log_card;
   Fl_My_Double_Window *window_cfg;
+
+  HzCard *main_view;
+  HzCard *log_view;
+  Fl_Choice *main_server_choice;
+  Fl_Box *main_timer;
+  Fl_Box *main_timer_caption;
+  Fl_Box *main_gain_label;
+  Fl_Box *server_addr;
+  Fl_Box *server_port;
+  Fl_Box *server_mount;
+  Fl_Box *server_pass;
+  Fl_Box *encoder_codec;
+  Fl_Box *encoder_bitrate;
+  Fl_Box *encoder_samplerate;
+  Fl_Box *encoder_channels;
+  HzButton *nav_main;
+  HzButton *nav_settings;
+  HzButton *nav_log;
+  HzButton *nav_about;
 private:
   inline void cb_window_cfg_i(Fl_My_Double_Window*, void*);
   static void cb_window_cfg(Fl_My_Double_Window*, void*);
