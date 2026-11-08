@@ -6,11 +6,13 @@
 #include "FL/Fl_My_Double_Window.H"
 #include <stdlib.h> 
 #include "config.h"
+#include "hertz_brand.h"
 #include "flgui.h"
 #include "fl_timer_funcs.h"
 #include "FL/Fl_My_Value_Slider.H"
 #include <FL/Fl_Group.H>
 #include "Fl_ILM216.h"
+#include "HzVuMeter.h"
 #include "fl_callbacks.h"
 #include "cfg.h"
 #include <FL/Fl_Button.H>
@@ -30,6 +32,7 @@ public:
   bool info_visible; 
   Fl_Text_Buffer *info_buffer; 
   flgui();
+  void build_modern_main();
   Fl_My_Double_Window *window_main;
 private:
   inline void cb_window_main_i(Fl_My_Double_Window*, void*);
@@ -108,6 +111,17 @@ public:
   Fl_Box *VU_Text;
   Fl_Box *R_VU;
   Fl_Box *L_VU;
+  Fl_Box *brand_title;
+  Fl_Box *brand_sub;
+  Fl_Box *status_pill;
+  Fl_Box *status_text;
+  Fl_Box *status_detail;
+  Fl_Box *server_label;
+  Fl_Box *codec_label;
+  Fl_Box *bitrate_label;
+  Fl_Box *stream_stats;
+  HzVuMeter *vu_display;
+  Fl_Group *log_card;
   Fl_My_Double_Window *window_cfg;
 private:
   inline void cb_window_cfg_i(Fl_My_Double_Window*, void*);

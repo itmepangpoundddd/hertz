@@ -19,6 +19,7 @@
 #include <signal.h>
 #include <time.h>
 #include <sys/stat.h>
+#include <FL/fl_draw.H>
 
 #ifndef _WIN32
  #include <sys/wait.h>
@@ -36,7 +37,248 @@
 #include "shoutcast.h"
 #include "icecast.h"
 #include "strfuncs.h"
+#include "hertz_theme.h"
 
+
+/* HERTZ palette: a dark slate UI with the same cyan accent used by the HERTZ
+ * admin dashboard. Kept local to the GUI layer so the encoder and ingest code
+ * stay unchanged. */
+static bool hz_is_window(Fl_Widget *w)
+{
+    return w == fl_g->window_main || w == fl_g->window_cfg ||
+           w == fl_g->window_add_srv || w == fl_g->window_add_icy;
+}
+
+static void hz_theme_widget(Fl_Widget *w)
+{
+    if(w == NULL)
+        return;
+
+    if(Fl_Tabs *tabs = dynamic_cast<Fl_Tabs*>(w))
+    {
+        tabs->color(HZ_PANEL);
+        tabs->selection_color(HZ_ACCENT);
+        tabs->labelcolor(HZ_TEXT);
+        tabs->labelfont(FL_HELVETICA_BOLD);
+        tabs->labelsize(11);
+    }
+
+    if(Fl_Text_Display *text = dynamic_cast<Fl_Text_Display*>(w))
+    {
+        text->color(HZ_INPUT);
+        text->textcolor(HZ_TEXT);
+        text->selection_color(HZ_ACCENT);
+        text->textfont(FL_COURIER);
+        text->textsize(12);
+    }
+    else if(Fl_Choice *choice = dynamic_cast<Fl_Choice*>(w))
+    {
+        choice->color(HZ_INPUT);
+        choice->textcolor(HZ_TEXT);
+        choice->selection_color(HZ_ACCENT);
+        choice->labelfont(FL_HELVETICA);
+        choice->labelsize(11);
+        choice->textsize(11);
+    }
+    else if(Fl_Value_Input *value_input = dynamic_cast<Fl_Value_Input*>(w))
+    {
+        value_input->color(HZ_INPUT);
+        value_input->textcolor(HZ_TEXT);
+        value_input->selection_color(HZ_ACCENT);
+        value_input->labelfont(FL_HELVETICA);
+        value_input->labelsize(11);
+        value_input->textsize(11);
+    }
+    else if(Fl_Input_ *input = dynamic_cast<Fl_Input_*>(w))
+    {
+        input->color(HZ_INPUT);
+        input->textcolor(HZ_TEXT);
+        input->selection_color(HZ_ACCENT);
+        input->labelfont(FL_HELVETICA);
+        input->labelsize(11);
+        input->textsize(11);
+    }
+    else if(Fl_Check_Button *check = dynamic_cast<Fl_Check_Button*>(w))
+    {
+        check->color(HZ_BG);
+        check->selection_color(HZ_ACCENT);
+        check->labelcolor(HZ_TEXT);
+        check->labelfont(FL_HELVETICA);
+        check->labelsize(11);
+    }
+    else if(Fl_Round_Button *radio = dynamic_cast<Fl_Round_Button*>(w))
+    {
+        radio->color(HZ_BG);
+        radio->selection_color(HZ_ACCENT);
+        radio->labelcolor(HZ_TEXT);
+        radio->labelfont(FL_HELVETICA);
+        radio->labelsize(11);
+    }
+    else if(Fl_Button *button = dynamic_cast<Fl_Button*>(w))
+    {
+        const char *label = button->label();
+        bool modern_button = label != NULL &&
+            (strcmp(label, "Connect") == 0 || strcmp(label, "Disconnect") == 0 ||
+             strcmp(label, "Record") == 0 || strcmp(label, "Settings") == 0 ||
+             strcmp(label, "Close settings") == 0 || strcmp(label, "Hide log") == 0 ||
+             strcmp(label, "Show log") == 0);
+
+        if(!modern_button)
+        {
+            button->box(FL_ROUND_UP_BOX);
+            button->down_box(FL_ROUND_DOWN_BOX);
+            button->color(HZ_BUTTON);
+            button->selection_color(HZ_ACCENT);
+            button->labelcolor(HZ_TEXT);
+            button->labelfont(FL_HELVETICA_BOLD);
+            button->labelsize(11);
+        }
+    }
+    else if(Fl_Box *box = dynamic_cast<Fl_Box*>(w))
+    {
+        bool modern_box = box == fl_g->brand_title || box == fl_g->brand_sub ||
+            box == fl_g->status_pill || box == fl_g->status_text ||
+            box == fl_g->status_detail || box == fl_g->server_label ||
+            box == fl_g->codec_label || box == fl_g->bitrate_label ||
+            box == fl_g->stream_stats || box == fl_g->VU_Text;
+        if(!modern_box)
+        {
+            box->labelcolor(HZ_MUTED);
+            box->labelfont(FL_HELVETICA);
+            box->labelsize(11);
+        }
+    }
+
+    if(Fl_Group *group = dynamic_cast<Fl_Group*>(w))
+    {
+        if(!hz_is_window(w) && dynamic_cast<Fl_Tabs*>(w) == NULL)
+        {
+            Fl_Boxtype current = group->box();
+            if(current == FL_ENGRAVED_FRAME || current == FL_ENGRAVED_BOX ||
+               current == FL_DOWN_FRAME || current == FL_DOWN_BOX)
+            {
+                group->box(FL_ROUNDED_BOX);
+                group->color(HZ_PANEL);
+            }
+            else if(current == FL_ROUNDED_BOX || current == FL_ROUNDED_FRAME)
+            {
+                group->color(HZ_PANEL);
+            }
+            else
+            {
+                group->color(HZ_BG);
+            }
+            group->labelcolor(HZ_MUTED);
+            group->labelfont(FL_HELVETICA_BOLD);
+            group->labelsize(11);
+        }
+        for(int i = 0; i < group->children(); i++)
+            hz_theme_widget(group->child(i));
+    }
+}
+
+static void hz_theme_window(Fl_Window *win)
+{
+    if(win == NULL)
+        return;
+    win->color(HZ_BG);
+    win->selection_color(HZ_BG);
+    win->labelcolor(HZ_TEXT);
+    for(int i = 0; i < win->children(); i++)
+        hz_theme_widget(win->child(i));
+    win->redraw();
+}
+
+void hertz_apply_theme(void)
+{
+    Fl::background(11, 18, 32);
+    Fl::background2(17, 28, 46);
+    Fl::foreground(232, 241, 250);
+    Fl::set_font(FL_HELVETICA, "Segoe UI");
+    Fl::set_font(FL_HELVETICA_BOLD, "Segoe UI Semibold");
+    Fl::set_font(FL_COURIER, "Cascadia Mono");
+
+    /* Migrate the old butt defaults only; custom LCD colors are preserved. */
+    if(cfg.main.bg_color == 151540480)
+        cfg.main.bg_color = (int)HZ_BG;
+    if(cfg.main.txt_color == -256)
+        cfg.main.txt_color = (int)HZ_TEXT;
+
+    fl_g->window_main->label(HERTZ_BUTT_NAME " " PACKAGE_VERSION);
+    fl_g->window_cfg->label(HERTZ_BUTT_NAME " settings");
+
+    hz_theme_window(fl_g->window_main);
+    hz_theme_window(fl_g->window_cfg);
+    hz_theme_window(fl_g->window_add_srv);
+    hz_theme_window(fl_g->window_add_icy);
+
+    fl_g->button_gui_bg_color->color(cfg.main.bg_color,
+            fl_lighter((Fl_Color)cfg.main.bg_color));
+    fl_g->button_gui_text_color->color(cfg.main.txt_color,
+            fl_lighter((Fl_Color)cfg.main.txt_color));
+    fl_g->window_main->redraw();
+    fl_g->window_cfg->redraw();
+    hertz_update_status();
+}
+
+
+void hertz_update_status(void)
+{
+    if(fl_g == NULL || fl_g->status_text == NULL)
+        return;
+
+    const char *state = "IDLE";
+    const char *detail = "Ready to broadcast";
+    Fl_Color color = HZ_MUTED;
+
+    if(recording)
+    {
+        state = "RECORDING";
+        detail = "Writing the broadcast to disk";
+        color = HZ_BAD;
+    }
+    else if(connected && streaming)
+    {
+        state = "ON AIR";
+        detail = "Live audio is being sent";
+        color = HZ_GOOD;
+    }
+    else if(try_connect)
+    {
+        state = "CONNECTING";
+        detail = "Waiting for the server";
+        color = HZ_WARN;
+    }
+    else if(connected)
+    {
+        state = "CONNECTED";
+        detail = "Connected, not streaming";
+        color = HZ_GOOD;
+    }
+
+    fl_g->status_text->label(state);
+    fl_g->status_text->labelcolor(color);
+    fl_g->status_pill->label(state);
+    fl_g->status_pill->labelcolor(color);
+    fl_g->status_detail->label(detail);
+
+    if(cfg.main.num_of_srv > 0 && cfg.srv != NULL && cfg.selected_srv >= 0 &&
+       cfg.selected_srv < cfg.main.num_of_srv && cfg.srv[cfg.selected_srv] != NULL)
+        fl_g->server_label->copy_label(cfg.srv[cfg.selected_srv]->name);
+    else
+        fl_g->server_label->label("No server selected");
+
+    const char *codec = cfg.audio.codec != NULL ? cfg.audio.codec : "—";
+    char buf[128];
+    snprintf(buf, sizeof(buf), "%s · %d Hz · %s", codec,
+             cfg.audio.samplerate, cfg.audio.channel == 1 ? "Mono" : "Stereo");
+    fl_g->codec_label->copy_label(buf);
+
+    snprintf(buf, sizeof(buf), "%d kbps", cfg.audio.bitrate);
+    fl_g->bitrate_label->copy_label(buf);
+
+    fl_g->window_main->redraw();
+}
 
 void fill_cfg_widgets(void)
 {
@@ -181,6 +423,7 @@ void fill_cfg_widgets(void)
         fl_g->window_cfg->stay_on_top(1);
     }
     fl_g->check_gui_lcd_auto->value(cfg.gui.lcd_auto);
+    hertz_update_status();
 }
 
 //Updates the samplerate drop down menu for the audio
@@ -299,6 +542,11 @@ void print_lcd(const char *text, int len, int home, int clear)
 
     if(home)
         fl_g->lcd->cursor_pos(0);
+
+    if(fl_g->stream_stats != NULL && strchr(text, '\n') != NULL)
+        fl_g->stream_stats->copy_label(text);
+
+    hertz_update_status();
 }
 
 

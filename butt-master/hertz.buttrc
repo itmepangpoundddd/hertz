@@ -1,7 +1,7 @@
-# HERTZ temporary broadcasting preset for butt
+# HERTZ temporary broadcasting preset for Hertz-butt
 #
 # Open this file with:
-#   butt -c hertz.buttrc
+#   Hertz-butt -c hertz.buttrc
 #
 # The HERTZ server entry uses type = 2 (HERTZ RTP). No password, mountpoint,
 # or Icecast handshake is used. HERTZ must be running with UDP ingest on

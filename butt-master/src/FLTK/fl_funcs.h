@@ -30,6 +30,8 @@ void print_lcd(const char *text, int len, int home, int clear);
 void test_file_extension(void);
 void expand_string(char **str);
 void init_main_gui_and_audio(void);
+void hertz_apply_theme(void);
+void hertz_update_status(void);
 
 #endif
 

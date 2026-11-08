@@ -1,4 +1,4 @@
-// butt - broadcast using this tool
+// Hertz-butt - broadcast using this tool
 //
 // Copyright 2007-2008 by Daniel Noethen.
 //
@@ -66,6 +66,11 @@ unsigned int record_start_hour;
 sec_timer rec_timer;
 sec_timer stream_timer;
 
+static void open_settings_timer(void*)
+{
+    button_cfg_cb();
+}
+
 lame_enc lame_stream;
 lame_enc lame_rec;
 vorbis_enc vorbis_stream;
@@ -94,7 +99,9 @@ int main(int argc, char *argv[])
     Fl_File_Icon::load_system_icons();
 #endif
 
+    Fl::scheme("gtk+");
     fl_g = new flgui(); 
+    hertz_apply_theme();
     fl_g->window_main->show();
 
 #ifdef _WIN32 
@@ -111,7 +118,7 @@ int main(int argc, char *argv[])
 
     snprintf(info_buf, sizeof(info_buf), "Starting %s\nWritten by Daniel Nöthen\n"
     	"PayPal: bipak@gmx.net\n"
-        "Bitcoin: 13xxTxB7hUGrXAGCR7hLi85GSXdE1Jyhx9\n", PACKAGE_STRING);
+        "Bitcoin: 13xxTxB7hUGrXAGCR7hLi85GSXdE1Jyhx9\n", HERTZ_BUTT_NAME);
     print_info(info_buf, 0);
 
 #ifdef _WIN32
@@ -162,7 +169,7 @@ int main(int argc, char *argv[])
 
     if(snd_init() != 0)
     {
-        ALERT("PortAudio init failed\nbutt is going to close now");
+        ALERT("PortAudio init failed\nHertz-butt is going to close now");
         return 1;
     }
 
@@ -173,10 +180,10 @@ int main(int argc, char *argv[])
 
         if(cfg_create_default())
         {
-            fl_alert("Could not create config %s\nbutt is going to close now", cfg_path);
+            fl_alert("Could not create config %s\nHertz-butt is going to close now", cfg_path);
             return 1;
         }
-        sprintf(info_buf, "butt created a default config at\n%s\n",
+        sprintf(info_buf, "Hertz-butt created a default config at\n%s\n",
                 cfg_path );
 
         print_info(info_buf, 0);
@@ -184,6 +191,15 @@ int main(int argc, char *argv[])
     }
 
     init_main_gui_and_audio();
+
+    for(int i = 1; i < argc; i++)
+    {
+        if(!strcmp(argv[i], "--settings"))
+        {
+            Fl::add_timeout(0.25, &open_settings_timer);
+            break;
+        }
+    }
 
     snd_open_stream();
 
@@ -199,7 +215,7 @@ int main(int argc, char *argv[])
 		button_connect_cb();
 
     snprintf(info_buf, sizeof(info_buf),
-            "butt %s started successfully", VERSION);
+            "Hertz-butt %s started successfully", VERSION);
     print_info(info_buf, 0);
 
     GUI_LOOP();

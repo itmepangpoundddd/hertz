@@ -1,8 +1,8 @@
-# Broadcast Using This Tool
+# Hertz-butt — Broadcast Using This Tool
 
-butt (broadcast using this tool) is an easy to use, multi OS streaming tool. It supports ShoutCast and IceCast and runs on Linux, MacOS and Windows. The main purpose of butt is to stream live audio data from your computers Mic or Line input to an Shoutcast or Icecast server. Recording is also possible. It is NOT intended to be a server by itself or automatically stream a set of audio files.
+Hertz-butt is the HERTZ fork of **butt** (broadcast using this tool), with a redesigned dark FLTK interface and a `HERTZ RTP` server type. It supports ShoutCast and IceCast and runs on Linux, MacOS and Windows. It streams live audio from a microphone or line input to an Icecast/Shoutcast server or to HERTZ as raw Opus RTP. Recording is also possible.
 
-> **HERTZ RTP adaptation:** this fork adds a `HERTZ RTP` server type that sends raw Opus RTP/UDP to HERTZ. See [HERTZ.md](HERTZ.md) and the portable `dist/hertz-butt-windows-x64.zip`.
+> **HERTZ RTP adaptation:** the `HERTZ RTP` server type sends raw Opus RTP/UDP to HERTZ. See [HERTZ.md](HERTZ.md) and the portable `dist/hertz-butt-windows-x64.zip`.
 
 ## This Repository
 

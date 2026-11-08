@@ -16,6 +16,7 @@
 #ifndef BUTT_H
 #define BUTT_H
 
+#include "hertz_brand.h"
 #include "timer.h"
 #include "lame_encode.h"
 #include "vorbis_encode.h"

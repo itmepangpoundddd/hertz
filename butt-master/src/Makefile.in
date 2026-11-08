@@ -104,18 +104,19 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am__butt_SOURCES_DIST = butt.cpp butt.h cfg.cpp cfg.h icecast.cpp \
-	icecast.h lame_encode.cpp lame_encode.h parseconfig.cpp \
-	parseconfig.h port_audio.cpp port_audio.h ringbuffer.cpp \
-	ringbuffer.h shoutcast.cpp shoutcast.h sockfuncs.cpp \
-	sockfuncs.h strfuncs.cpp strfuncs.h timer.cpp timer.h util.cpp \
-	util.h vorbis_encode.cpp vorbis_encode.h vu_meter.cpp \
-	vu_meter.h wav_header.cpp wav_header.h opus_encode.cpp \
-	opus_encode.h flac_encode.cpp flac_encode.h hertz.cpp hertz.h \
-	FLTK/Fl_ILM216.cpp FLTK/Fl_ILM216.h FLTK/fl_callbacks.cpp \
-	FLTK/fl_callbacks.h FLTK/fl_funcs.cpp FLTK/fl_funcs.h \
-	FLTK/flgui.cpp FLTK/flgui.h FLTK/FL/Fl_My_Double_Window.H \
-	FLTK/FL/Fl_My_Value_Slider.H \
+am__butt_SOURCES_DIST = butt.cpp butt.h hertz_brand.h cfg.cpp cfg.h \
+	icecast.cpp icecast.h lame_encode.cpp lame_encode.h \
+	parseconfig.cpp parseconfig.h port_audio.cpp port_audio.h \
+	ringbuffer.cpp ringbuffer.h shoutcast.cpp shoutcast.h \
+	sockfuncs.cpp sockfuncs.h strfuncs.cpp strfuncs.h timer.cpp \
+	timer.h util.cpp util.h vorbis_encode.cpp vorbis_encode.h \
+	vu_meter.cpp vu_meter.h wav_header.cpp wav_header.h \
+	opus_encode.cpp opus_encode.h flac_encode.cpp flac_encode.h \
+	hertz.cpp hertz.h FLTK/Fl_ILM216.cpp FLTK/Fl_ILM216.h \
+	FLTK/fl_callbacks.cpp FLTK/fl_callbacks.h FLTK/fl_funcs.cpp \
+	FLTK/fl_funcs.h FLTK/flgui.cpp FLTK/flgui.h FLTK/HzVuMeter.cpp \
+	FLTK/HzVuMeter.h FLTK/hertz_theme.h \
+	FLTK/FL/Fl_My_Double_Window.H FLTK/FL/Fl_My_Value_Slider.H \
 	FLTK/Fl_My_Native_File_Chooser.cxx \
 	FLTK/FL/Fl_My_Native_File_Chooser.H FLTK/fl_timer_funcs.cpp \
 	FLTK/fl_timer_funcs.h aac_encode.cpp aac_encode.h resource.rc
@@ -129,7 +130,8 @@ am_butt_OBJECTS = butt.$(OBJEXT) cfg.$(OBJEXT) icecast.$(OBJEXT) \
 	wav_header.$(OBJEXT) opus_encode.$(OBJEXT) \
 	flac_encode.$(OBJEXT) hertz.$(OBJEXT) FLTK/Fl_ILM216.$(OBJEXT) \
 	FLTK/fl_callbacks.$(OBJEXT) FLTK/fl_funcs.$(OBJEXT) \
-	FLTK/flgui.$(OBJEXT) FLTK/Fl_My_Native_File_Chooser.$(OBJEXT) \
+	FLTK/flgui.$(OBJEXT) FLTK/HzVuMeter.$(OBJEXT) \
+	FLTK/Fl_My_Native_File_Chooser.$(OBJEXT) \
 	FLTK/fl_timer_funcs.$(OBJEXT) aac_encode.$(OBJEXT) \
 	$(am__objects_1)
 butt_OBJECTS = $(am_butt_OBJECTS)
@@ -160,8 +162,9 @@ am__depfiles_remade = ./$(DEPDIR)/aac_encode.Po ./$(DEPDIR)/butt.Po \
 	./$(DEPDIR)/vorbis_encode.Po ./$(DEPDIR)/vu_meter.Po \
 	./$(DEPDIR)/wav_header.Po FLTK/$(DEPDIR)/Fl_ILM216.Po \
 	FLTK/$(DEPDIR)/Fl_My_Native_File_Chooser.Po \
-	FLTK/$(DEPDIR)/fl_callbacks.Po FLTK/$(DEPDIR)/fl_funcs.Po \
-	FLTK/$(DEPDIR)/fl_timer_funcs.Po FLTK/$(DEPDIR)/flgui.Po
+	FLTK/$(DEPDIR)/HzVuMeter.Po FLTK/$(DEPDIR)/fl_callbacks.Po \
+	FLTK/$(DEPDIR)/fl_funcs.Po FLTK/$(DEPDIR)/fl_timer_funcs.Po \
+	FLTK/$(DEPDIR)/flgui.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -313,18 +316,19 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -IFLTK
-butt_SOURCES = butt.cpp butt.h cfg.cpp cfg.h icecast.cpp icecast.h \
-	lame_encode.cpp lame_encode.h parseconfig.cpp parseconfig.h \
-	port_audio.cpp port_audio.h ringbuffer.cpp ringbuffer.h \
-	shoutcast.cpp shoutcast.h sockfuncs.cpp sockfuncs.h \
-	strfuncs.cpp strfuncs.h timer.cpp timer.h util.cpp util.h \
-	vorbis_encode.cpp vorbis_encode.h vu_meter.cpp vu_meter.h \
-	wav_header.cpp wav_header.h opus_encode.cpp opus_encode.h \
-	flac_encode.cpp flac_encode.h hertz.cpp hertz.h \
+butt_SOURCES = butt.cpp butt.h hertz_brand.h cfg.cpp cfg.h icecast.cpp \
+	icecast.h lame_encode.cpp lame_encode.h parseconfig.cpp \
+	parseconfig.h port_audio.cpp port_audio.h ringbuffer.cpp \
+	ringbuffer.h shoutcast.cpp shoutcast.h sockfuncs.cpp \
+	sockfuncs.h strfuncs.cpp strfuncs.h timer.cpp timer.h util.cpp \
+	util.h vorbis_encode.cpp vorbis_encode.h vu_meter.cpp \
+	vu_meter.h wav_header.cpp wav_header.h opus_encode.cpp \
+	opus_encode.h flac_encode.cpp flac_encode.h hertz.cpp hertz.h \
 	FLTK/Fl_ILM216.cpp FLTK/Fl_ILM216.h FLTK/fl_callbacks.cpp \
 	FLTK/fl_callbacks.h FLTK/fl_funcs.cpp FLTK/fl_funcs.h \
-	FLTK/flgui.cpp FLTK/flgui.h FLTK/FL/Fl_My_Double_Window.H \
-	FLTK/FL/Fl_My_Value_Slider.H \
+	FLTK/flgui.cpp FLTK/flgui.h FLTK/HzVuMeter.cpp \
+	FLTK/HzVuMeter.h FLTK/hertz_theme.h \
+	FLTK/FL/Fl_My_Double_Window.H FLTK/FL/Fl_My_Value_Slider.H \
 	FLTK/Fl_My_Native_File_Chooser.cxx \
 	FLTK/FL/Fl_My_Native_File_Chooser.H FLTK/fl_timer_funcs.cpp \
 	FLTK/fl_timer_funcs.h aac_encode.cpp aac_encode.h \
@@ -418,6 +422,8 @@ FLTK/fl_funcs.$(OBJEXT): FLTK/$(am__dirstamp) \
 	FLTK/$(DEPDIR)/$(am__dirstamp)
 FLTK/flgui.$(OBJEXT): FLTK/$(am__dirstamp) \
 	FLTK/$(DEPDIR)/$(am__dirstamp)
+FLTK/HzVuMeter.$(OBJEXT): FLTK/$(am__dirstamp) \
+	FLTK/$(DEPDIR)/$(am__dirstamp)
 FLTK/Fl_My_Native_File_Chooser.$(OBJEXT): FLTK/$(am__dirstamp) \
 	FLTK/$(DEPDIR)/$(am__dirstamp)
 FLTK/fl_timer_funcs.$(OBJEXT): FLTK/$(am__dirstamp) \
@@ -455,6 +461,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wav_header.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@FLTK/$(DEPDIR)/Fl_ILM216.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@FLTK/$(DEPDIR)/Fl_My_Native_File_Chooser.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@FLTK/$(DEPDIR)/HzVuMeter.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@FLTK/$(DEPDIR)/fl_callbacks.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@FLTK/$(DEPDIR)/fl_funcs.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@FLTK/$(DEPDIR)/fl_timer_funcs.Po@am__quote@ # am--include-marker
@@ -648,6 +655,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/wav_header.Po
 	-rm -f FLTK/$(DEPDIR)/Fl_ILM216.Po
 	-rm -f FLTK/$(DEPDIR)/Fl_My_Native_File_Chooser.Po
+	-rm -f FLTK/$(DEPDIR)/HzVuMeter.Po
 	-rm -f FLTK/$(DEPDIR)/fl_callbacks.Po
 	-rm -f FLTK/$(DEPDIR)/fl_funcs.Po
 	-rm -f FLTK/$(DEPDIR)/fl_timer_funcs.Po
@@ -718,6 +726,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/wav_header.Po
 	-rm -f FLTK/$(DEPDIR)/Fl_ILM216.Po
 	-rm -f FLTK/$(DEPDIR)/Fl_My_Native_File_Chooser.Po
+	-rm -f FLTK/$(DEPDIR)/HzVuMeter.Po
 	-rm -f FLTK/$(DEPDIR)/fl_callbacks.Po
 	-rm -f FLTK/$(DEPDIR)/fl_funcs.Po
 	-rm -f FLTK/$(DEPDIR)/fl_timer_funcs.Po

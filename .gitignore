@@ -1,4 +1,5 @@
 bin/
+.rec_*.mp3
 *.exe
 *.test
 *.out

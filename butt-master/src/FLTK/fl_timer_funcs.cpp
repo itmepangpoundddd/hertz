@@ -240,7 +240,7 @@ void split_recording_timer(void* mode)
                 free(path);
                 free(path_for_index_loop);
                 print_info("Could not find a valid filename for next file"
-                        "\nbutt keeps recording to current file", 0);
+                        "\nHertz-butt keeps recording to current file", 0);
                 return;
             }
         }

@@ -299,7 +299,7 @@ void button_cfg_cb(void)
                                 fl_g->window_main->y());
 #endif
         fl_g->window_cfg->show();
-        fl_g->button_cfg->label("Settings@<");
+        fl_g->button_cfg->label("Close settings");
 
         fill_cfg_widgets();
 
@@ -875,28 +875,20 @@ void button_record_cb(void)
         free(path_without_split_time);
 }
 
-void button_info_cb() //changed "Info" text to "More"
+void button_info_cb()
 {
     if (!fl_g->info_visible)
     {
-        // Show info output...
-        fl_g->window_main->resize(fl_g->window_main->x(),
-                                  fl_g->window_main->y(),
-                                  fl_g->window_main->w(),
-                                  fl_g->info_output->y() + 205);
-        fl_g->info_output->show();
-        fl_g->button_info->label("Less @2<");
+        fl_g->window_main->size(540, 650);
+        fl_g->log_card->show();
+        fl_g->button_info->label("Hide log");
         fl_g->info_visible = 1;
     }
     else
     {
-        // Hide info output...
-        fl_g->window_main->resize(fl_g->window_main->x(),
-                                  fl_g->window_main->y(),
-                                  fl_g->window_main->w(),
-                                  fl_g->info_output->y() - 30);
-        fl_g->info_output->hide();
-        fl_g->button_info->label("More @2>");
+        fl_g->log_card->hide();
+        fl_g->window_main->size(540, 520);
+        fl_g->button_info->label("Show log");
         fl_g->info_visible = 0;
     }
 }

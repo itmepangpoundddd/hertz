@@ -1,6 +1,6 @@
-# butt with HERTZ RTP
+# Hertz-butt with HERTZ RTP
 
-This directory is a small adaptation of **butt** for temporary live broadcasts to HERTZ.
+This directory is a small adaptation of **butt** for temporary live broadcasts to HERTZ. The app is branded **Hertz-butt** and uses a redesigned FLTK interface.
 
 The normal butt output is Ogg/Opus over Icecast/Shoutcast. This build adds a third server type:
 
@@ -22,10 +22,19 @@ It captures the same microphone/line input through PortAudio, encodes Opus at 48
    .\bin\hertz.exe
    ```
 
-2. Build/copy `butt.exe` next to `butt-hertz.bat`.
+2. Build/copy `Hertz-butt.exe` next to `butt-hertz.bat`.
 3. Double-click `butt-hertz.bat`.
-4. Press the connect/play button in butt.
+4. Press the connect/play button in Hertz-butt.
 5. Open the HERTZ listener page/link and press play.
+
+To open settings directly:
+
+```powershell
+.\Hertz-butt.exe -c hertz.buttrc --settings
+```
+
+The main window uses a modern dark layout with status cards, a smooth stereo
+level meter, and a compact activity log. Settings uses the same palette.
 
 The included `hertz.buttrc` is a local demo preset:
 - server type: HERTZ RTP
@@ -37,17 +46,17 @@ The included `hertz.buttrc` is a local demo preset:
 - stereo
 - connect at startup: enabled
 
-`butt-hertz.bat` copies the preset to `%TEMP%\butt-hertz.buttrc` so your normal butt configuration is not modified.
+`butt-hertz.bat` copies the preset to `%TEMP%\hertz-butt.buttrc` so your normal butt configuration is not modified.
 
 Tested on 2026-11-07 with the portable UCRT64 build:
-- butt connected to HERTZ as **HERTZ RTP**, Opus 48 kHz stereo, 128 kbps.
+- Hertz-butt connected to HERTZ as **HERTZ RTP**, Opus 48 kHz stereo, 128 kbps.
 - HERTZ received ~133 kbps / 50 pps with zero invalid packets.
 - A headless HERTZ listener received 390 packets over 8 s with 0 loss and ~133 kbps.
 - First RTP arrived at the listener after 278 ms on loopback (join included; not acoustic latency).
 
 ## Manual configuration
 
-In butt: **Settings → Add server**
+In Hertz-butt: **Settings → Add server**
 - Type: **HERTZ RTP**
 - Address: HERTZ host/IP
 - Port: HERTZ `HERTZ_INGEST_ADDR` port (default `5004`)
@@ -57,7 +66,7 @@ In butt: **Settings → Add server**
 - Channels: stereo
 - Bitrate: 128–256 kbps
 
-HERTZ only accepts Opus for this path. If another codec is selected, butt refuses to connect.
+HERTZ only accepts Opus for this path. If another codec is selected, Hertz-butt refuses to connect.
 
 ## Build
 
@@ -77,7 +86,7 @@ autoreconf -fi
 make -j4
 ```
 
-The resulting `src/butt.exe` needs the UCRT64 runtime DLLs. For a portable folder, copy the required `ucrt64/bin/*.dll` files next to it, or run it from the MSYS2 UCRT64 shell.
+The resulting `src/butt.exe` needs the UCRT64 runtime DLLs. Copy it to `Hertz-butt.exe` and place the required `ucrt64/bin/*.dll` files next to it for a portable folder, or run it from the MSYS2 UCRT64 shell.
 
 ## Important limitations
 
